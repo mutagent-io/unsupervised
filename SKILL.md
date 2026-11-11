@@ -40,8 +40,9 @@ without someone watching each step; it never means skipping those two
 approvals.
 
 Commands and behaviour can change between releases. When this skill and the
-live product disagree, the product wins: run `/help` in a session, or read
-https://docs.mutagent.io/architech/overview.
+live product disagree, the product wins: the boot screen a session prints
+(the lifecycle commands, Full-Loop and Fast Mode come from it), `/help` in a
+session, and https://docs.mutagent.io/architech/overview.
 
 ## 1. Route the request
 
@@ -195,7 +196,7 @@ Commands for both modes, polling, and what to do with each verdict:
 | Installer says a terminal is required | The user runs it in their own terminal, not through this agent |
 | `Email must look like name@example.com` | Retype it in that form |
 | `Email not accepted (waitlist)` | The download service did not take that address: check the spelling and rerun; `--reset` enters a different one |
-| No model answers in the session | `/login`, then `/model`; `architech doctor` shows what it found |
+| No model answers in the session | `/login`, then `/model`; `architech doctor --strict` shows what it found |
 | A headless run never returns | Use `scripts/run-headless.sh`; by hand, close stdin (`</dev/null`) and cap the time |
 | A headless run ends with `NO_VERDICT` or `BLOCKED` | It could not ask you: read `out.txt`, add the missing answer to the brief, run again |
 | A headless run ends `INTERRUPTED` | Something stopped the script (often the shell call's time limit); Architech was stopped too. Start it in the background |

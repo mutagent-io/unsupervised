@@ -46,12 +46,15 @@ EMAIL_RE = re.compile(r"(?<![\w.+-])([A-Za-z0-9._%+-]+)@([A-Za-z0-9-]+(?:\.[A-Za
 ALLOWED_EMAIL_DOMAINS = {"example.com", "example.org", "example.net", "users.noreply.github.com"}
 ROLE_MAILBOXES = {"noreply", "no-reply", "hello", "support", "team", "security", "contact",
                   "info", "oss", "opensource", "legal", "privacy"}
+# The project's commit author address, allowed exactly (no other address at its domain).
+ALLOWED_EMAILS = {"factory@mutagent.io"}
 
 
 def personal_emails(line: str) -> list[str]:
     found = []
     for local, domain in EMAIL_RE.findall(line):
-        if domain.lower() in ALLOWED_EMAIL_DOMAINS or local.lower() in ROLE_MAILBOXES:
+        address = f"{local}@{domain}".lower()
+        if address in ALLOWED_EMAILS or domain.lower() in ALLOWED_EMAIL_DOMAINS or local.lower() in ROLE_MAILBOXES:
             continue
         found.append(f"{local}@{domain}")
     return found
