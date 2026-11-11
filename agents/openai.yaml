@@ -1,0 +1,6 @@
+interface:
+  display_name: "Unsupervised (Architech)"
+  short_description: "Install, onboard and run Architech: agents that plan, build, review and ship code"
+  default_prompt: "Use $unsupervised to set up Architech in this repository."
+policy:
+  allow_implicit_invocation: true

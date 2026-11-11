@@ -1,0 +1,44 @@
+name: Tag on version bump
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  tag:
+    name: Tag v<version> when the plugin version changes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Push a tag if marketplace.json's version changed
+        run: |
+          set -euo pipefail
+          mp=".claude-plugin/marketplace.json"
+          read_version() {
+            python3 -c "import json, sys; d = json.load(sys.stdin); print(next((p.get('version', '') for p in d.get('plugins', []) if p.get('name') == 'unsupervised'), ''))"
+          }
+          curr=$(read_version < "$mp")
+          prev=$(git show "HEAD~1:$mp" 2>/dev/null | read_version 2>/dev/null || true)
+          if [[ -z "$curr" ]]; then
+            echo "::error::no version for plugin 'unsupervised' in $mp"; exit 1
+          fi
+          if [[ "$prev" == "$curr" ]]; then
+            echo "version unchanged ($curr); no tag"; exit 0
+          fi
+          tag="v$curr"
+          if git rev-parse "$tag" >/dev/null 2>&1; then
+            echo "tag $tag already exists; skipping"; exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$tag" -m "unsupervised $tag"
+          git push origin "$tag"
+          echo "tagged $tag (was '${prev}')"

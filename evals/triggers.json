@@ -1,0 +1,31 @@
+{
+  "about": "Trigger cases for the unsupervised skill. should_trigger prompts must load it; should_not_trigger prompts are near misses that must not. check_skill.py guards the description's trigger list against the near misses; trigger_eval.py runs them in Claude Code.",
+  "should_trigger": [
+    "Set up Architech in this repo.",
+    "How do I install Architech?",
+    "I want to try Architech on my project, where do I start?",
+    "Onboard this repository to Architech.",
+    "Plan this feature with Architech.",
+    "Hand this bug to Architech and tell me when the PR is up.",
+    "Run architech -p headless on this task and read the verdict back.",
+    "What's the difference between Full-Loop and Fast Mode in Architech?",
+    "Which Architech command should I use for a small bug fix?",
+    "Dispatch this issue to Architech in the background so it can still ask me questions.",
+    "Is Architech up to date? Check for an update.",
+    "Let Architech's agents build this unsupervised while I review the plan."
+  ],
+  "should_not_trigger": [
+    "Explain unsupervised learning.",
+    "How do I do unsupervised clustering in sklearn?",
+    "Set up Helix to evaluate my LLM agent.",
+    "Compare k-means and DBSCAN for unsupervised anomaly detection.",
+    "Write a PCA example for dimensionality reduction.",
+    "Who is the architect on this project?",
+    "Design the system architecture for a payment service.",
+    "Run my test suite headless in CI.",
+    "Start a tmux session for my dev server.",
+    "Review this pull request for bugs.",
+    "Install the GitHub CLI.",
+    "Train an autoencoder without labels."
+  ]
+}

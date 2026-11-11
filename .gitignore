@@ -1,0 +1,15 @@
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+node_modules/
+__pycache__/
+.venv/
+
+# Local Claude Code settings: never publish per-machine settings
+.claude/
+
+# Release tarballs and build output (made by the release workflow)
+*.tar.gz
+dist/

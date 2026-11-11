@@ -1,0 +1,12 @@
+{
+  "name": "unsupervised",
+  "description": "Install, onboard and run Architech, Mutagent's software-engineering harness, from Claude Code or Codex.",
+  "version": "0.1.0",
+  "author": { "name": "Mutagent", "url": "https://mutagent.io" },
+  "homepage": "https://github.com/mutagent-io/unsupervised",
+  "repository": "https://github.com/mutagent-io/unsupervised",
+  "license": "MIT",
+  "keywords": ["architech", "mutagent", "coding-agents", "onboarding", "headless", "agent-skills"],
+  "icon": "./assets/icon.png",
+  "skills": ["."]
+}

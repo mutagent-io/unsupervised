@@ -1,0 +1,70 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    name: Publish GitHub Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Read the version from the tag
+        id: parse
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF#refs/tags/v}"
+          skill_version=$(sed -n 's/^  skill_version: "\(.*\)"$/\1/p' SKILL.md)
+          if [[ "$version" != "$skill_version" ]]; then
+            echo "::error::tag v$version does not match SKILL.md skill_version $skill_version"; exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "asset=unsupervised-v${version}.tar.gz" >> "$GITHUB_OUTPUT"
+
+      - name: Build the skill tarball
+        env:
+          ASSET: ${{ steps.parse.outputs.asset }}
+        run: |
+          set -euo pipefail
+          # The installable skill: what a user needs, unpacked as unsupervised/.
+          mkdir -p dist/unsupervised
+          cp -R SKILL.md README.md LICENSE CHANGELOG.md references assets scripts agents .claude-plugin dist/unsupervised/
+          tar -czf "$ASSET" -C dist unsupervised
+          tar -tzf "$ASSET"
+          ls -lh "$ASSET"
+
+      - name: Release notes from CHANGELOG.md
+        env:
+          VERSION: ${{ steps.parse.outputs.version }}
+        run: |
+          set -euo pipefail
+          {
+            echo "# unsupervised v$VERSION"
+            echo
+            awk -v ver="$VERSION" '
+              /^## \[/ { if (on) exit; if (index($0, "[" ver "]")) { on = 1 } }
+              on { print }
+            ' CHANGELOG.md
+          } > release-notes.md
+          cat release-notes.md
+
+      - name: Create GitHub Release
+        # Pinned to softprops/action-gh-release v3.0.0 commit SHA.
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda  # v3.0.0
+        with:
+          name: "unsupervised v${{ steps.parse.outputs.version }}"
+          tag_name: "v${{ steps.parse.outputs.version }}"
+          body_path: release-notes.md
+          files: ${{ steps.parse.outputs.asset }}
+          draft: false
+          prerelease: false

@@ -1,0 +1,91 @@
+name: Validate
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+# Default to read-only. Jobs that need more must opt in explicitly.
+permissions:
+  contents: read
+
+jobs:
+  sanitization:
+    name: Sanitization check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: No machine paths or secrets
+        run: python3 .github/scripts/sanitize.py --check
+
+  skill-checks:
+    name: Skill structure, limits and trigger list
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - run: python3 .github/scripts/check_skill.py
+
+  agent-skills-spec:
+    name: Agent Skills spec (skills-ref)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install skills-ref (pinned)
+        run: |
+          set -euo pipefail
+          python -m pip install \
+            "git+https://github.com/agentskills/agentskills.git@38a2ff82958afee88dadf4831509e6f7e9d8ef4e#subdirectory=skills-ref"
+      - name: Validate the repository root as the skill
+        # skills-ref requires the folder name to equal the skill name. A fork
+        # checks out under its own repository name, so validate a copy named
+        # after the skill.
+        run: |
+          set -euo pipefail
+          dest="$RUNNER_TEMP/unsupervised"
+          rsync -a --exclude .git ./ "$dest/"
+          skills-ref validate "$dest"
+
+  marketplace-spec:
+    name: Claude Code plugin and marketplace
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+      - name: Validate plugin + marketplace
+        run: claude plugin validate .
+
+  scripts:
+    name: Headless runner
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Syntax and shellcheck
+        run: |
+          bash -n scripts/run-headless.sh
+          shellcheck scripts/run-headless.sh .github/scripts/test-run-headless.sh
+      - name: Behaviour, against a fake architech
+        run: bash .github/scripts/test-run-headless.sh
