@@ -27,7 +27,8 @@ case "${FAKE_MODE:-done}" in
   crash)   echo "provider error" >&2; exit 3 ;;
   pwd)     pwd; printf 'VERDICT: DONE\n' ;;
   prompt)  printf '%s\nVERDICT: DONE\n' "$2" ;;
-  hang)    sleep 300 & echo $! >"$FAKE_PIDFILE"; wait ;;   # a child that outlives a naive kill
+  hang)    echo $$ >"$FAKE_PIDFILE.fake"                   # the fake itself, then
+           sleep 300 & echo $! >"$FAKE_PIDFILE"; wait ;;   # a child that outlives a naive kill
 esac
 FAKE
 chmod +x "$WORK/bin/architech"
@@ -80,6 +81,49 @@ for sig in TERM HUP INT; do
   check "$sig to the runner: rc.txt is 128+signal" "$((128 + $(kill -l "$sig")))" "$(cat "$WORK/run-sig-$sig/rc.txt" 2>/dev/null)"
   check "$sig to the runner: Architech's process tree is gone" gone \
     "$(kill -0 "$(cat "$pidfile" 2>/dev/null || echo 999999)" 2>/dev/null && echo alive || echo gone)"
+done
+
+# A real Ctrl-C from a terminal: the runner runs on a pty as its controlling
+# terminal, and ^C written to the pty makes the terminal send SIGINT to whatever
+# process group is in the foreground, exactly as a person pressing Ctrl-C does.
+pidfile="$WORK/grandchild-ctrlc.pid"
+ctrlc_exit="$(FAKE_MODE=hang FAKE_PIDFILE="$pidfile" python3 - "$SCRIPT" "$WORK/project" "$WORK/run-ctrlc" "$pidfile" <<'PY'
+import os, pty, select, sys, time
+script, project, run, pidfile = sys.argv[1:5]
+pid, fd = pty.fork()
+if pid == 0:
+    os.execvp(script, [script, "--cwd", project, "--prompt", "x", "--timeout", "600", "--run", run])
+deadline = time.time() + 15
+while not (os.path.exists(pidfile) and os.path.getsize(pidfile)) and time.time() < deadline:
+    time.sleep(0.2)
+time.sleep(1.5)            # let the runner settle into its polling loop
+os.write(fd, b"\x03")      # Ctrl-C, through the terminal
+end = time.time() + 20
+while time.time() < end:  # drain output until the runner closes the pty
+    r, _, _ = select.select([fd], [], [], 0.5)
+    if r:
+        try:
+            if not os.read(fd, 4096):
+                break
+        except OSError:
+            break
+    done, status = os.waitpid(pid, os.WNOHANG)
+    if done:
+        break
+else:
+    os.kill(pid, 9)
+    done, status = os.waitpid(pid, 0)
+if not done:
+    done, status = os.waitpid(pid, 0)
+print(os.waitstatus_to_exitcode(status))
+PY
+)"
+sleep 1
+check "Ctrl-C on a terminal: verdict INTERRUPTED" INTERRUPTED "$(cat "$WORK/run-ctrlc/verdict.txt" 2>/dev/null)"
+check "Ctrl-C on a terminal: the runner exits 130" 130 "$ctrlc_exit"
+for which in "$pidfile" "$pidfile.fake"; do
+  check "Ctrl-C on a terminal: $(basename "$which") process gone" gone \
+    "$(kill -0 "$(cat "$which" 2>/dev/null || echo 999999)" 2>/dev/null && echo alive || echo gone)"
 done
 
 (cd "$WORK" && FAKE_MODE="done" "$SCRIPT" --cwd "$WORK/project" --prompt x --run rel-run >/dev/null)

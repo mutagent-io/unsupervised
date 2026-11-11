@@ -13,8 +13,9 @@ Usage:
     ./.github/scripts/sanitize.py --check --git     # commit authors, committers, messages
     ./.github/scripts/sanitize.py --check --git <repo>
 """
-# Personal email addresses are flagged; these stay allowed: documentation
-# domains, GitHub noreply addresses, and role mailboxes.
+# Email addresses are flagged unless they are: at a documentation domain, a
+# GitHub noreply address, a role mailbox at mutagent.io, or the project's author
+# address.
 
 from __future__ import annotations
 
@@ -44,8 +45,11 @@ LEAK_RE = [(label, re.compile(rx)) for label, rx in LEAK_PATTERNS]
 
 EMAIL_RE = re.compile(r"(?<![\w.+-])([A-Za-z0-9._%+-]+)@([A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*\.[A-Za-z]{2,})")
 ALLOWED_EMAIL_DOMAINS = {"example.com", "example.org", "example.net", "users.noreply.github.com"}
+# Role mailboxes are allowed only at the project's own public domain: a role-style
+# address elsewhere still names a domain (possibly a private one), so it is flagged.
 ROLE_MAILBOXES = {"noreply", "no-reply", "hello", "support", "team", "security", "contact",
                   "info", "oss", "opensource", "legal", "privacy"}
+ROLE_MAILBOX_DOMAINS = {"mutagent.io"}
 # The project's commit author address, allowed exactly (no other address at its domain).
 ALLOWED_EMAILS = {"factory@mutagent.io"}
 
@@ -54,7 +58,8 @@ def personal_emails(line: str) -> list[str]:
     found = []
     for local, domain in EMAIL_RE.findall(line):
         address = f"{local}@{domain}".lower()
-        if address in ALLOWED_EMAILS or domain.lower() in ALLOWED_EMAIL_DOMAINS or local.lower() in ROLE_MAILBOXES:
+        role = local.lower() in ROLE_MAILBOXES and domain.lower() in ROLE_MAILBOX_DOMAINS
+        if address in ALLOWED_EMAILS or domain.lower() in ALLOWED_EMAIL_DOMAINS or role:
             continue
         found.append(f"{local}@{domain}")
     return found

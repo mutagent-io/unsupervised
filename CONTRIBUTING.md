@@ -42,6 +42,7 @@ python3 .github/scripts/sanitize.py --check --git   # the same, in commit author
 bash .github/scripts/test-sanitize.sh         # the sanitizer's own tests
 bash .github/scripts/test-run-headless.sh     # the runner, against a fake architech
 bash .github/scripts/test-build-release.sh    # the release tarball and notes, dry run
+bash .github/scripts/test-release-plan.sh     # when a release happens, for every merge shape
 shellcheck scripts/*.sh .github/scripts/*.sh
 claude plugin validate .                      # Claude Code manifests
 skills-ref validate "$PWD"                    # Agent Skills spec; needs a checkout folder named `unsupervised`
@@ -71,11 +72,12 @@ Bump these together, in one pull request:
 3. the plugin's `version` in `.claude-plugin/marketplace.json`
 4. a new top entry in `CHANGELOG.md`
 
-`check_skill.py` fails if they differ. When a merge to `main` changes the
-version, the Release workflow tags `v<version>` and publishes the release with
-the skill tarball in the same job (a tag pushed by a workflow does not start
-other workflows). To publish or re-upload an existing tag, run the Release
-workflow by hand with that tag.
+`check_skill.py` fails if they differ. On every push to `main`, the Release
+workflow checks whether `v<version>` is tagged yet; if not, it tags it and
+publishes the release with the skill tarball in the same job (a tag pushed by a
+workflow does not start other workflows). Any way of reaching `main` works:
+direct push, squash, merge commit or rebase merge. To publish or re-upload
+an existing tag, run the Release workflow by hand with that tag.
 
 When you re-check the skill against a new Architech release, update
 `metadata.architech_checked`.

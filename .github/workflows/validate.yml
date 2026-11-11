@@ -96,3 +96,5 @@ jobs:
         run: bash .github/scripts/test-run-headless.sh
       - name: Release build, dry run
         run: bash .github/scripts/test-build-release.sh
+      - name: Release decision, dry run (every merge shape)
+        run: bash .github/scripts/test-release-plan.sh

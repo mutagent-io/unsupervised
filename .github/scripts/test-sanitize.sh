@@ -23,7 +23,9 @@ check "flags a personal email in a file" flagged "$(scan "$WORK/files/personal.m
 printf 'Use name@example.com, a@example.org or 1+bot@users.noreply.github.com\n' >"$WORK/files/ok.md"
 check "allows example and noreply addresses" clean "$(scan "$WORK/files/ok.md")"
 printf 'Questions: support@mutagent.io or security@mutagent.io\n' >"$WORK/files/role.md"
-check "allows role addresses" clean "$(scan "$WORK/files/role.md")"
+check "allows role addresses at mutagent.io" clean "$(scan "$WORK/files/role.md")"
+printf 'Ask %s or %s\n' "$(printf '%s@%s' team internal-corp.io)" "$(printf '%s@%s' support internal-corp.io)" >"$WORK/files/role-private.md"
+check "flags role addresses at any other domain" flagged "$(scan "$WORK/files/role-private.md")"
 
 repo() { # dir author-email message
   git init -q "$1"
@@ -39,6 +41,8 @@ repo "$WORK/r4" factory@mutagent.io "first"
 check "--git passes the project's author address" clean "$(scan --git "$WORK/r4")"
 repo "$WORK/r5" "$(printf '%s@%s' factory2 mutagent.io)" "first"
 check "--git flags any other address at that domain" flagged "$(scan --git "$WORK/r5")"
+repo "$WORK/r6" "$(printf '%s@%s' team internal-corp.io)" "first"
+check "--git flags a role-style author at a private domain" flagged "$(scan --git "$WORK/r6")"
 repo "$WORK/r3" 1+someone@users.noreply.github.com "token ghp_$(printf 'a%.0s' $(seq 30))"
 check "--git flags a token in a commit message" flagged "$(scan --git "$WORK/r3")"
 

@@ -20,40 +20,22 @@ concurrency:
 
 jobs:
   release:
-    name: Tag and publish when the version changes
+    name: Tag and publish a version that has no release yet
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 2
           ref: ${{ inputs.tag }}   # empty on push: the pushed commit
 
       - name: Decide what to release
         id: plan
         env:
           INPUT_TAG: ${{ inputs.tag }}
-        run: |
-          set -euo pipefail
-          read_version() { sed -n 's/^  skill_version: "\(.*\)"$/\1/p'; }
-          version=$(read_version < SKILL.md)
-          if [[ -n "$INPUT_TAG" ]]; then
-            [[ "$INPUT_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::tag must look like v1.2.3"; exit 1; }
-            { echo "tag=$INPUT_TAG"; echo "push_tag=false"; echo "publish=true"; } >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          prev=$(git show HEAD~1:SKILL.md 2>/dev/null | read_version || true)
-          tag="v$version"
-          if [[ "$prev" == "$version" ]]; then
-            echo "version unchanged ($version); nothing to release"
-            echo "publish=false" >> "$GITHUB_OUTPUT"; exit 0
-          fi
-          if git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null; then
-            echo "tag $tag already exists; publish it with the workflow_dispatch trigger"
-            echo "publish=false" >> "$GITHUB_OUTPUT"; exit 0
-          fi
-          { echo "tag=$tag"; echo "push_tag=true"; echo "publish=true"; } >> "$GITHUB_OUTPUT"
+        # Releases whenever tag v<version> is not on origin yet, however the
+        # change reached main. Dry-run tested in .github/scripts/test-release-plan.sh.
+        run: .github/scripts/release-plan.sh "$INPUT_TAG"
 
       - name: Push the tag
         if: steps.plan.outputs.push_tag == 'true'

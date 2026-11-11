@@ -63,6 +63,8 @@ trap 'on_signal 15' TERM
 set -m  # the child runs in its own process group, so one signal stops all of it
 ( cd "$CWD" && exec architech -p "$PROMPT" </dev/null >"$RUN/out.txt" 2>"$RUN/err.txt" ) &
 PID=$!
+set +m  # job control for the launch only: the polling sleeps stay in this script's group,
+        # so a terminal Ctrl-C reaches this script and its INT trap
 SECS=0; RC=""
 while kill -0 "$PID" 2>/dev/null; do
   if [ "$SECS" -ge "$CAP" ]; then
