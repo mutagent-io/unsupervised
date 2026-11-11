@@ -1,70 +1,92 @@
 name: Release
 
+# One job tags AND publishes. A tag pushed with GITHUB_TOKEN does not start other
+# workflows, so a separate "on: push: tags" release workflow would never run.
 on:
   push:
-    tags:
-      - 'v*.*.*'
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "An existing tag to publish (or re-upload), e.g. v0.1.0"
+        required: true
 
 permissions:
   contents: read
 
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
   release:
-    name: Publish GitHub Release
+    name: Tag and publish when the version changes
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
         with:
-          persist-credentials: false
+          fetch-depth: 2
+          ref: ${{ inputs.tag }}   # empty on push: the pushed commit
 
-      - name: Read the version from the tag
-        id: parse
+      - name: Decide what to release
+        id: plan
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
         run: |
           set -euo pipefail
-          version="${GITHUB_REF#refs/tags/v}"
-          skill_version=$(sed -n 's/^  skill_version: "\(.*\)"$/\1/p' SKILL.md)
-          if [[ "$version" != "$skill_version" ]]; then
-            echo "::error::tag v$version does not match SKILL.md skill_version $skill_version"; exit 1
+          read_version() { sed -n 's/^  skill_version: "\(.*\)"$/\1/p'; }
+          version=$(read_version < SKILL.md)
+          if [[ -n "$INPUT_TAG" ]]; then
+            [[ "$INPUT_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::tag must look like v1.2.3"; exit 1; }
+            { echo "tag=$INPUT_TAG"; echo "push_tag=false"; echo "publish=true"; } >> "$GITHUB_OUTPUT"
+            exit 0
           fi
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-          echo "asset=unsupervised-v${version}.tar.gz" >> "$GITHUB_OUTPUT"
+          prev=$(git show HEAD~1:SKILL.md 2>/dev/null | read_version || true)
+          tag="v$version"
+          if [[ "$prev" == "$version" ]]; then
+            echo "version unchanged ($version); nothing to release"
+            echo "publish=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          if git ls-remote --exit-code --tags origin "refs/tags/$tag" >/dev/null; then
+            echo "tag $tag already exists; publish it with the workflow_dispatch trigger"
+            echo "publish=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          { echo "tag=$tag"; echo "push_tag=true"; echo "publish=true"; } >> "$GITHUB_OUTPUT"
 
-      - name: Build the skill tarball
+      - name: Push the tag
+        if: steps.plan.outputs.push_tag == 'true'
         env:
-          ASSET: ${{ steps.parse.outputs.asset }}
+          TAG: ${{ steps.plan.outputs.tag }}
         run: |
           set -euo pipefail
-          # The installable skill: what a user needs, unpacked as unsupervised/.
-          mkdir -p dist/unsupervised
-          cp -R SKILL.md README.md LICENSE CHANGELOG.md references assets scripts agents .claude-plugin dist/unsupervised/
-          tar -czf "$ASSET" -C dist unsupervised
-          tar -tzf "$ASSET"
-          ls -lh "$ASSET"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "unsupervised $TAG"
+          git push origin "$TAG"
 
-      - name: Release notes from CHANGELOG.md
+      - name: Build the skill tarball and notes
+        if: steps.plan.outputs.publish == 'true'
         env:
-          VERSION: ${{ steps.parse.outputs.version }}
+          TAG: ${{ steps.plan.outputs.tag }}
         run: |
           set -euo pipefail
-          {
-            echo "# unsupervised v$VERSION"
-            echo
-            awk -v ver="$VERSION" '
-              /^## \[/ { if (on) exit; if (index($0, "[" ver "]")) { on = 1 } }
-              on { print }
-            ' CHANGELOG.md
-          } > release-notes.md
-          cat release-notes.md
+          .github/scripts/build-release.sh --tag "$TAG" --out dist
+          tar -tzf "dist/unsupervised-$TAG.tar.gz"
+          cat dist/release-notes.md
 
-      - name: Create GitHub Release
-        # Pinned to softprops/action-gh-release v3.0.0 commit SHA.
-        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda  # v3.0.0
-        with:
-          name: "unsupervised v${{ steps.parse.outputs.version }}"
-          tag_name: "v${{ steps.parse.outputs.version }}"
-          body_path: release-notes.md
-          files: ${{ steps.parse.outputs.asset }}
-          draft: false
-          prerelease: false
+      - name: Publish the GitHub release
+        if: steps.plan.outputs.publish == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.plan.outputs.tag }}
+        run: |
+          set -euo pipefail
+          asset="dist/unsupervised-$TAG.tar.gz"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$asset" --clobber
+          else
+            gh release create "$TAG" "$asset" --verify-tag \
+              --title "unsupervised $TAG" --notes-file dist/release-notes.md
+          fi

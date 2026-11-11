@@ -89,9 +89,10 @@ example `architech 0.1.46 is up to date`.
 
 | Symptom | Cause | Do this |
 |---|---|---|
-| "a terminal is required" | The installer ran from an agent's shell | The user runs `bash architech-install.sh` in their own terminal |
-| The email is rejected | It does not look like an email | Check it reads like `name@example.com` and run again |
-| The saved email is refused later | An old or mistyped address | `bash architech-install.sh --reset`, then enter a new one |
+| `architech: a terminal is required: rerun interactively ...` | The installer ran from an agent's shell | The user runs `bash architech-install.sh` in their own terminal |
+| `architech: Email must look like name@example.com; try again` | It does not look like an email | Retype it in that form |
+| `architech: Email not accepted; try again` | The download service did not take that address | Check the spelling and type it again |
+| `architech: Email not accepted (waitlist). Rerun the installer to enter it again (or rerun with --reset; ...)` | The address was refused on every try, or a saved one is refused now (a refused saved address is removed) | Check the spelling and rerun `bash architech-install.sh`; to use a different address, `bash architech-install.sh --reset` |
 | Checksum mismatch | A broken or tampered download | Download again. Never bypass the check |
 | Unsupported platform | Windows, or an unusual CPU | Use WSL on Windows; otherwise macOS or Linux on arm64/x64 |
 | `architech: command not found` | The install directory is not on `PATH` | Use the printed full path, or add the directory to `PATH` |

@@ -64,14 +64,11 @@ read-only.
 
 ## Troubleshooting
 
-| Symptom | Do this |
-|---|---|
-| The installer says a terminal is required | Run `bash architech-install.sh` in your own terminal |
-| `architech: command not found` | Use the full path the installer printed, or add its directory to `PATH` |
-| No model answers | `/login`, then `/model`; `architech doctor` shows what it found |
-| A headless run hangs | Close stdin and cap the time; `scripts/run-headless.sh` does both |
-| A headless run ends `BLOCKED` or `NO_VERDICT` | Add the missing answer to the brief and run again |
-| Onboarding proposes a change you don't want | Decline that step; it never overwrites context you wrote |
+- Install problems, with the installer's exact messages:
+  [install.md, section 7](install.md#7-when-the-install-goes-wrong).
+- Headless runs and their verdicts:
+  [dispatch.md, section 2](dispatch.md#verdicts).
+- Everything else: the symptom table in [SKILL.md](../SKILL.md), section 6.
 
 ## Where to read more
 

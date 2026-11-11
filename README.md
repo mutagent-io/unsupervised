@@ -57,9 +57,10 @@ git clone https://github.com/mutagent-io/unsupervised ~/.agents/skills/unsupervi
 
 Or clone it into a repository's `.agents/skills/` to use it in that repository only.
 
-**Pinned:** each release on the
-[releases page](https://github.com/mutagent-io/unsupervised/releases) has a
-tarball of the skill.
+**Pinned:** every release on the
+[releases page](https://github.com/mutagent-io/unsupervised/releases) attaches
+`unsupervised-v<version>.tar.gz`, which unpacks to an `unsupervised/` skill
+folder: copy it into `~/.claude/skills/` or `~/.agents/skills/`.
 
 ## Then say
 

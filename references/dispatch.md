@@ -24,23 +24,38 @@ and ended `BLOCKED`. So the brief carries every answer up front and says
 
 ### The one command
 
-```bash
-scripts/run-headless.sh --cwd /abs/path/to/project \
-  (--brief /abs/run/brief.md | --prompt "<text>") [--timeout 900] [--run /abs/run-dir]
+```text
+scripts/run-headless.sh --cwd <project> (--brief <file> | --prompt "<text>")
+                        [--timeout <seconds>] [--run <dir>]
 ```
 
-It runs `architech -p` from the project directory with stdin closed, caps the
-wall clock (without `timeout`, which macOS lacks), stops the whole process
-group at the cap, and writes into the run directory:
+It runs `architech -p` from the project directory with stdin closed and caps
+the wall clock (without `timeout`, which macOS lacks). At the cap, or when the
+script itself is stopped (TERM, INT, HUP), it stops Architech's whole process
+group and still writes a verdict. It refuses a prompt that starts with `/ship`.
+
+A run usually outlasts one shell call (Claude Code stops a call after 2
+minutes by default, 10 at most), so start it in the background and poll. In
+Claude Code, use the shell tool's background option; elsewhere:
+
+```bash
+mkdir -p /abs/run
+nohup scripts/run-headless.sh --cwd /abs/path/to/project \
+  --brief /abs/run/brief.md --run /abs/run --timeout 1800 >/abs/run/runner.log 2>&1 &
+```
+
+Then check every minute or so until `/abs/run/verdict.txt` exists. The run
+directory holds:
 
 | File | Holds |
 |---|---|
 | `out.txt` | Architech's answer |
 | `err.txt` | Errors (sign-in, provider, network) |
-| `rc.txt` | Exit code (124 = stopped at the cap) |
-| `verdict.txt` | `DONE`, `BLOCKED`, `FAILED`, `NO_VERDICT` or `TIMEOUT` |
+| `rc.txt` | Exit code (124 = stopped at the cap; 128+n = the script got signal n) |
+| `verdict.txt` | `DONE`, `BLOCKED`, `FAILED`, `NO_VERDICT`, `TIMEOUT` or `INTERRUPTED` |
 
-It prints one line: `run=<dir> rc=<code> verdict=<verdict>`.
+It prints one line, `run=<dir> rc=<code> verdict=<verdict>`, and exits 0 once a
+verdict is written: read the verdict, not the script's exit code.
 
 By hand, without the script:
 
@@ -71,14 +86,15 @@ plus your own wall-clock cap.
 | `NO_VERDICT` | The turn ended without the brief's last line | Read `out.txt`; usually a missing answer or an unclear brief |
 | `FAILED` | It said it failed, or exited non-zero | Read `err.txt` first: sign-in, provider, network |
 | `TIMEOUT` | Stopped at the cap; nothing left running | Narrow the task or raise `--timeout` |
+| `INTERRUPTED` | The script was stopped (a shell-call limit, Ctrl-C); Architech was stopped too | Start it in the background, as above |
 
 ### Long runs and fan-out
 
 - **Claude Code:** one shell call has a time limit. Start the script in the
   background and poll for `verdict.txt` every minute or so.
-- **Codex:** the sandbox must allow network access and Architech's own writes
-  outside the workspace; otherwise expect permission or network errors that are
-  not Architech faults.
+- **Codex (expected; not yet tested):** the sandbox will likely need to allow
+  network access and Architech's own writes outside the workspace; otherwise
+  expect permission or network errors that are not Architech faults.
 - **Parallel:** one `--run` directory per task. Several headless runs can go at
   once; each one is its own session.
 
@@ -93,20 +109,41 @@ second option, and the session carried on with that answer.
 
 ### Commands (tmux is the only extra tool)
 
+Two rules for every tmux command:
+
+- **Its own server:** always `-L unsupervised`. Your sessions then live apart
+  from the user's own tmux sessions, and nothing you do can touch theirs.
+- **Exact targets:** `-t '=arch-<task>'` for session commands and
+  `-t '=arch-<task>:'` (with the colon) for pane commands. A bare
+  `-t arch-<task>` also matches a longer name that starts with it, so it can
+  type into, or kill, another task's session.
+
 | Step | Command |
 |---|---|
-| Start | `tmux new-session -d -s arch-<task> -x 160 -y 50 -c /abs/path/to/project architech` |
-| Type a task | `tmux send-keys -t arch-<task> -l '<text>'` then `tmux send-keys -t arch-<task> Enter` |
-| Read | `tmux capture-pane -p -t arch-<task> -S -200` |
-| Answer a menu | `tmux send-keys -t arch-<task> Down` (or `Up`) to move, then `... Enter` to pick |
-| The user watches or takes over | `tmux attach -t arch-<task>` (detach: `Ctrl-b d`) |
-| Stop | type `/exit` into the pane, or `tmux kill-session -t arch-<task>` |
+| Start | `tmux -L unsupervised new-session -d -s arch-<task> -x 160 -y 50 -c /abs/path/to/project architech` |
+| Type a task | `tmux -L unsupervised send-keys -t '=arch-<task>:' -l '<text>'` then `tmux -L unsupervised send-keys -t '=arch-<task>:' Enter` |
+| Read | `tmux -L unsupervised capture-pane -p -t '=arch-<task>:' -S -200` |
+| Answer a menu | `tmux -L unsupervised send-keys -t '=arch-<task>:' Down` (or `Up`) to move, then the same with `Enter` to pick |
+| Is it still there? | `tmux -L unsupervised has-session -t '=arch-<task>'` |
+| The user watches or takes over | `tmux -L unsupervised attach -t '=arch-<task>'` (detach: `Ctrl-b d`) |
+| Stop | type `/exit` into the pane (send it with `-l`, then `Enter`) |
+| Stop, if `/exit` gets no answer | see below |
 
-Stop only the session you started. **Never run `tmux kill-server`**: it ends
-every tmux session the user has, not just yours. If you want your sessions
-fully separate from the user's, give every command the same private socket,
-for example `tmux -L arch new-session ...`, `tmux -L arch capture-pane ...`;
-the user then attaches with `tmux -L arch attach -t arch-<task>`.
+If the session does not respond to `/exit`, stop Architech itself, not just
+the tmux session. `kill-session` alone can leave Architech running with no
+screen: checked on 0.1.46, it survived the session's hangup. Stop the pane's
+process group instead; the pane, and the session, then close on their own:
+
+```bash
+pid=$(tmux -L unsupervised display-message -p -t '=arch-<task>:' '#{pane_pid}')
+kill -TERM -- "-$pid"
+tmux -L unsupervised has-session -t '=arch-<task>' 2>/dev/null &&
+  tmux -L unsupervised kill-session -t '=arch-<task>'
+```
+
+Give each task its own session name. Stop only the session you started.
+**Never run `tmux kill-server`**, with or without `-L`: it ends every session
+on that server, including other tasks'.
 
 ### Who answers what
 
@@ -146,10 +183,12 @@ Start from [the brief template](../assets/brief-template.md). It holds:
 - the output file;
 - a last line that is exactly one `VERDICT:` line.
 
-## 5. Smoke test (30 seconds, after `/login`)
+## 5. Smoke test (seconds, after `/login`)
+
+Short enough to run in the foreground: the cap stays well under one shell call.
 
 ```bash
 scripts/run-headless.sh --cwd /abs/path/to/project \
-  --prompt 'Reply with exactly two lines: PONG, then VERDICT: DONE' --timeout 120
+  --prompt 'Reply with exactly two lines: PONG, then VERDICT: DONE' --timeout 60
 # -> ... verdict=DONE
 ```

@@ -18,11 +18,16 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+          fetch-depth: 0   # every commit's author, committer and message
       - uses: actions/setup-python@v5
         with:
           python-version: '3.x'
-      - name: No machine paths or secrets
+      - name: No machine paths, personal emails or secrets in files
         run: python3 .github/scripts/sanitize.py --check
+      - name: None in commit metadata either
+        run: python3 .github/scripts/sanitize.py --check --git
+      - name: The sanitizer's own tests
+        run: bash .github/scripts/test-sanitize.sh
 
   skill-checks:
     name: Skill structure, limits and trigger list
@@ -77,7 +82,7 @@ jobs:
         run: claude plugin validate .
 
   scripts:
-    name: Headless runner
+    name: Scripts (runner and release build)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -85,7 +90,9 @@ jobs:
           persist-credentials: false
       - name: Syntax and shellcheck
         run: |
-          bash -n scripts/run-headless.sh
-          shellcheck scripts/run-headless.sh .github/scripts/test-run-headless.sh
-      - name: Behaviour, against a fake architech
+          for f in scripts/*.sh .github/scripts/*.sh; do bash -n "$f"; done
+          shellcheck scripts/*.sh .github/scripts/*.sh
+      - name: Headless runner, against a fake architech
         run: bash .github/scripts/test-run-headless.sh
+      - name: Release build, dry run
+        run: bash .github/scripts/test-build-release.sh

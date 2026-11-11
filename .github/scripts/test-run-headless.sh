@@ -64,8 +64,36 @@ check "the cap is honoured (under 15 s)" yes "$([ "$elapsed" -lt 15 ] && echo ye
 sleep 1
 check "nothing left running after the cap" gone "$(kill -0 "$(cat "$FAKE_PIDFILE")" 2>/dev/null && echo alive || echo gone)"
 
+# The host stops the runner (a shell-call time limit, Ctrl-C, a closed terminal):
+# the runner must stop Architech too and still leave a verdict behind.
+for sig in TERM HUP INT; do
+  pidfile="$WORK/grandchild-$sig.pid"
+  set -m   # job control: the runner gets its own group and keeps INT, like a foreground run
+  FAKE_MODE=hang FAKE_PIDFILE="$pidfile" "$SCRIPT" --cwd "$WORK/project" --prompt x \
+    --timeout 600 --run "$WORK/run-sig-$sig" >/dev/null 2>&1 &
+  runner=$!
+  set +m
+  for _ in $(seq 50); do [ -s "$pidfile" ] && break; sleep 0.2; done
+  kill -"$sig" "$runner"
+  wait "$runner" 2>/dev/null || true
+  check "$sig to the runner: verdict INTERRUPTED" INTERRUPTED "$(cat "$WORK/run-sig-$sig/verdict.txt" 2>/dev/null)"
+  check "$sig to the runner: rc.txt is 128+signal" "$((128 + $(kill -l "$sig")))" "$(cat "$WORK/run-sig-$sig/rc.txt" 2>/dev/null)"
+  check "$sig to the runner: Architech's process tree is gone" gone \
+    "$(kill -0 "$(cat "$pidfile" 2>/dev/null || echo 999999)" 2>/dev/null && echo alive || echo gone)"
+done
+
+(cd "$WORK" && FAKE_MODE="done" "$SCRIPT" --cwd "$WORK/project" --prompt x --run rel-run >/dev/null)
+check "a relative --run lands beside the caller" DONE "$(cat "$WORK/rel-run/verdict.txt" 2>/dev/null)"
+
+check "refuses a /ship prompt (headless never merges)" 2 \
+  "$("$SCRIPT" --cwd "$WORK/project" --prompt '/ship 12' >/dev/null 2>&1; echo $?)"
+printf '\n  /ship 12\n' >"$WORK/ship-brief.md"
+check "refuses a brief that starts with /ship" 2 \
+  "$("$SCRIPT" --cwd "$WORK/project" --brief "$WORK/ship-brief.md" >/dev/null 2>&1; echo $?)"
+
 check "rejects a missing --cwd"     2 "$("$SCRIPT" --prompt x >/dev/null 2>&1; echo $?)"
 check "rejects a non-numeric cap"   2 "$("$SCRIPT" --cwd "$WORK/project" --prompt x --timeout 1m >/dev/null 2>&1; echo $?)"
+check "rejects a zero cap"          2 "$("$SCRIPT" --cwd "$WORK/project" --prompt x --timeout 0 >/dev/null 2>&1; echo $?)"
 check "rejects a missing brief"     2 "$("$SCRIPT" --cwd "$WORK/project" --brief "$WORK/nope.md" >/dev/null 2>&1; echo $?)"
 check "rejects no prompt at all"    2 "$("$SCRIPT" --cwd "$WORK/project" >/dev/null 2>&1; echo $?)"
 check "rejects an unknown argument" 2 "$("$SCRIPT" --cwd "$WORK/project" --prompt x --bogus >/dev/null 2>&1; echo $?)"

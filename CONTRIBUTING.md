@@ -37,9 +37,12 @@ CI runs all of these on every pull request. Run them locally first:
 
 ```bash
 python3 .github/scripts/check_skill.py        # structure, limits, versions, icon, trigger list
-python3 .github/scripts/sanitize.py --check   # no machine paths or secrets
+python3 .github/scripts/sanitize.py --check   # no machine paths, personal emails or secrets
+python3 .github/scripts/sanitize.py --check --git   # the same, in commit authors and messages
+bash .github/scripts/test-sanitize.sh         # the sanitizer's own tests
 bash .github/scripts/test-run-headless.sh     # the runner, against a fake architech
-shellcheck scripts/run-headless.sh .github/scripts/test-run-headless.sh
+bash .github/scripts/test-build-release.sh    # the release tarball and notes, dry run
+shellcheck scripts/*.sh .github/scripts/*.sh
 claude plugin validate .                      # Claude Code manifests
 skills-ref validate "$PWD"                    # Agent Skills spec; needs a checkout folder named `unsupervised`
 ```
@@ -68,9 +71,11 @@ Bump these together, in one pull request:
 3. the plugin's `version` in `.claude-plugin/marketplace.json`
 4. a new top entry in `CHANGELOG.md`
 
-`check_skill.py` fails if they differ. A merge to `main` that changes the
-version tags `v<version>`, and the tag publishes a release with a tarball of
-the skill.
+`check_skill.py` fails if they differ. When a merge to `main` changes the
+version, the Release workflow tags `v<version>` and publishes the release with
+the skill tarball in the same job (a tag pushed by a workflow does not start
+other workflows). To publish or re-upload an existing tag, run the Release
+workflow by hand with that tag.
 
 When you re-check the skill against a new Architech release, update
 `metadata.architech_checked`.

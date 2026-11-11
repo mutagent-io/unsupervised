@@ -17,9 +17,11 @@ description: >-
   is Helix), or for changing Architech itself.
 license: MIT
 compatibility: >-
-  Claude Code or Codex on macOS or Linux (arm64 or x64). Needs bash, curl, a
-  SHA-256 tool, git and network access, and the user's own terminal once for
-  the installer's email prompt. The background-session mode also needs tmux.
+  Claude Code or Codex. Checked on macOS; Linux (arm64 or x64) and the Codex
+  sandbox are expected to work, not yet tested. Needs bash, curl, a SHA-256
+  tool, git and network
+  access, and the user's own terminal once for the installer's email prompt.
+  The background-session mode also needs tmux.
 metadata:
   author: mutagent
   skill_version: "0.1.0"
@@ -137,28 +139,50 @@ questions**.
 | Good for | a planned, well-briefed task; several in parallel | work with decisions in it; anything near a plan approval |
 | Never for | merging (`/ship`) | answering a plan or merge approval for the user |
 
-**Headless**, with the bundled script (closes stdin, caps the wall clock,
-stops everything it started at the cap, grades the result):
+**Headless**, with the bundled script. It closes stdin, caps the wall clock,
+grades the result, and if anything stops it early it stops Architech too and
+writes `INTERRUPTED`. A run takes longer than one shell call may last (Claude
+Code stops a call after 2 minutes by default, 10 at most), so **start it in
+the background and poll for the verdict**. In Claude Code, use the shell
+tool's background option; elsewhere, `nohup ... &`:
 
 ```bash
-scripts/run-headless.sh --cwd /abs/path/to/project \
-  --brief /abs/run/brief.md --timeout 900
-# -> run=<dir> rc=<code> verdict=DONE|BLOCKED|FAILED|NO_VERDICT|TIMEOUT
+mkdir -p /abs/run
+nohup scripts/run-headless.sh --cwd /abs/path/to/project \
+  --brief /abs/run/brief.md --run /abs/run --timeout 1800 >/abs/run/runner.log 2>&1 &
+# then, every minute or so, until the file exists:
+cat /abs/run/verdict.txt   # DONE|BLOCKED|FAILED|NO_VERDICT|TIMEOUT|INTERRUPTED
 ```
+
+The script refuses a `/ship` prompt: a headless run never merges.
 
 Write the brief from [assets/brief-template.md](assets/brief-template.md):
 absolute paths, the output file, "open a pull request, do not merge", and a
 last-line `VERDICT:`. Because the run cannot ask, the brief must already hold
 every answer it needs.
 
-**Background session:** start `architech` in a detached tmux pane, type the
-task into it, and read the pane until it finishes or asks something. Relay
-every plan, merge or destructive question to the user and type their answer;
-answer a clarifying question yourself only when the brief already holds the
-answer. The user can attach to the pane at any time. When you are done, stop
-only the session you started (`/exit` in the pane, or
-`tmux kill-session -t <name>`); never kill the whole tmux server, which ends
-the user's other sessions too.
+**Background session:** start `architech` in a detached tmux pane on a tmux
+server of its own, type the task into it, and read the pane until it finishes
+or asks something. Relay every plan, merge or destructive question to the user
+and type their answer; answer a clarifying question yourself only when the
+brief already holds the answer. The user can attach at any time.
+
+```bash
+tmux -L unsupervised new-session -d -s arch-fix-login -x 160 -y 50 -c /abs/path/to/project architech
+tmux -L unsupervised send-keys -t '=arch-fix-login:' -l '<task>'
+tmux -L unsupervised send-keys -t '=arch-fix-login:' Enter
+tmux -L unsupervised capture-pane -p -t '=arch-fix-login:' -S -200
+tmux -L unsupervised send-keys -t '=arch-fix-login:' -l '/exit'   # when done, then Enter
+```
+
+If `/exit` gets no answer, stop the pane's process group, not just the tmux
+session: `kill-session` alone can leave Architech running with no screen. The
+exact commands are in [references/dispatch.md](references/dispatch.md).
+
+Always pass `-L unsupervised`, so you never touch the user's own tmux
+sessions, and always an exact target (`'=name'`, plus `:` for pane commands):
+a bare `-t name` also matches a longer name that starts with it, such as
+another task's session. Never run `tmux kill-server`.
 
 Commands for both modes, polling, and what to do with each verdict:
 [references/dispatch.md](references/dispatch.md).
@@ -169,10 +193,12 @@ Commands for both modes, polling, and what to do with each verdict:
 |---|---|
 | `architech: command not found` after install | Use the full path the installer printed, or add its directory to `PATH` |
 | Installer says a terminal is required | The user runs it in their own terminal, not through this agent |
-| Installer rejects the email | Check it looks like `name@example.com`; rerun, or use `--reset` to enter a new one |
+| `Email must look like name@example.com` | Retype it in that form |
+| `Email not accepted (waitlist)` | The download service did not take that address: check the spelling and rerun; `--reset` enters a different one |
 | No model answers in the session | `/login`, then `/model`; `architech doctor` shows what it found |
 | A headless run never returns | Use `scripts/run-headless.sh`; by hand, close stdin (`</dev/null`) and cap the time |
 | A headless run ends with `NO_VERDICT` or `BLOCKED` | It could not ask you: read `out.txt`, add the missing answer to the brief, run again |
+| A headless run ends `INTERRUPTED` | Something stopped the script (often the shell call's time limit); Architech was stopped too. Start it in the background |
 | Onboarding wants to change files you care about | Decline that step; it never overwrites context you wrote |
 
 ## 7. Sources
