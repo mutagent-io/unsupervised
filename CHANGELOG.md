@@ -3,6 +3,11 @@
 ## [0.1.0] - unreleased
 
 ### Added
+- Harness-neutral: works from any agent harness that can read files and run
+  shell commands, in three phases (start, setup, operate), with capability
+  checks, a short per-host table, and fallbacks without tmux or without a
+  shell. `AGENTS.md` and a README "For agents" section point other harnesses
+  to the same steps.
 - First release: install Architech with the public installer, onboard a
   repository, choose a flow (Full-Loop or Fast Mode), and hand work to
   Architech from Claude Code or Codex, headless (`scripts/run-headless.sh`) or

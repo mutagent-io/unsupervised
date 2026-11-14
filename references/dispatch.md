@@ -1,16 +1,20 @@
-# Hand work to Architech from Claude Code or Codex
+# Hand work to Architech from your harness
 
-Decide, brief, run, read the verdict: one pattern for both modes.
+Decide, brief, run, read the verdict: one pattern for both modes, for any
+harness that can run shell commands. What your harness can do decides which
+mode fits: see section 1 of [SKILL.md](../SKILL.md).
 
 ## 1. Decide in ten seconds
 
-1. A repo-local edit this agent can do itself? Do it here.
+1. A repo-local edit your harness can do itself? Do it there.
 2. Needs Architech's planning, review or parallel agents, in a repository where
    Architech is onboarded? Hand it over.
 3. Will it need decisions along the way? **Background session** (section 3).
    Fully briefed? **Headless** (section 2).
 4. Needs a merge? Neither mode merges for the user: they run `/ship`
    interactively, or approve the merge in the background session.
+5. Your harness cannot run shell commands? The user runs Architech; you write
+   the brief and read the result they paste back.
 
 ## 2. Mode A: headless (`architech -p`)
 
@@ -34,18 +38,41 @@ the wall clock (without `timeout`, which macOS lacks). At the cap, or when the
 script itself is stopped (TERM, INT, HUP), it stops Architech's whole process
 group and still writes a verdict. It refuses a prompt that starts with `/ship`.
 
-A run usually outlasts one shell call (Claude Code stops a call after 2
-minutes by default, 10 at most), so start it in the background and poll. In
-Claude Code, use the shell tool's background option; elsewhere:
+### Outlasting one shell call
 
-```bash
-mkdir -p /abs/run
-nohup scripts/run-headless.sh --cwd /abs/path/to/project \
-  --brief /abs/run/brief.md --run /abs/run --timeout 1800 >/abs/run/runner.log 2>&1 &
-```
+Most harnesses limit how long one shell call may run, and a real task takes
+longer. Start the runner so it keeps going after the call returns, then check
+for `verdict.txt` every minute or so. Use the first of these your harness
+supports:
 
-Then check every minute or so until `/abs/run/verdict.txt` exists. The run
-directory holds:
+1. **Its own way to run a command in the background**, if it has one: run the plain runner command
+   with it.
+2. **`nohup ... &`**, if processes it starts survive the end of a call:
+
+   ```bash
+   mkdir -p /abs/run
+   nohup scripts/run-headless.sh --cwd /abs/path/to/project \
+     --brief /abs/run/brief.md --run /abs/run --timeout 1800 >/abs/run/runner.log 2>&1 &
+   ```
+
+3. **A detached tmux session**, if tmux is installed: the tmux server keeps
+   the runner alive whatever happens to the call, and the session closes by
+   itself when the runner is done (checked on 0.1.46).
+
+   ```bash
+   mkdir -p /abs/run
+   tmux -L unsupervised new-session -d -s run-<task> \
+     "scripts/run-headless.sh --cwd /abs/path/to/project --brief /abs/run/brief.md --run /abs/run --timeout 1800"
+   ```
+
+4. **None of these:** keep `--timeout` under one call's limit, or ask the user
+   to run the runner in their own terminal and tell you the run directory.
+
+Not sure which applies? Start the smoke test (section 5) with option 2 and
+check its run directory in your next call: `DONE` means detached processes
+survive; `INTERRUPTED` means your harness stopped it, so use option 3 or 4.
+
+The run directory holds:
 
 | File | Holds |
 |---|---|
@@ -86,17 +113,17 @@ plus your own wall-clock cap.
 | `NO_VERDICT` | The turn ended without the brief's last line | Read `out.txt`; usually a missing answer or an unclear brief |
 | `FAILED` | It said it failed, or exited non-zero | Read `err.txt` first: sign-in, provider, network |
 | `TIMEOUT` | Stopped at the cap; nothing left running | Narrow the task or raise `--timeout` |
-| `INTERRUPTED` | The script was stopped (a shell-call limit, Ctrl-C); Architech was stopped too | Start it in the background, as above |
+| `INTERRUPTED` | The script was stopped (a shell call ending, Ctrl-C); Architech was stopped too | Start it detached, as above |
 
 ### Long runs and fan-out
 
-- **Claude Code:** one shell call has a time limit. Start the script in the
-  background and poll for `verdict.txt` every minute or so.
-- **Codex (expected; not yet tested):** the sandbox will likely need to allow
-  network access and Architech's own writes outside the workspace; otherwise
-  expect permission or network errors that are not Architech faults.
-- **Parallel:** one `--run` directory per task. Several headless runs can go at
-  once; each one is its own session.
+- **Time limits:** start long runs detached, as above, and poll.
+- **Sandboxes:** a sandboxed harness has to allow network access and
+  Architech's own writes outside the workspace; otherwise expect permission or
+  network errors that are not Architech faults.
+- **Parallel and delegation:** one `--run` directory per task. Several headless
+  runs can go at once, each its own session; a harness that delegates can give
+  each sub-agent one run.
 
 ## 3. Mode B: background session in tmux (can ask)
 
@@ -164,6 +191,12 @@ which change between releases:
 - **Idle:** the input line is empty and the output has stopped; the task is
   done or waiting for you.
 
+### Without tmux
+
+No tmux, no background session. Use a headless run with every answer in the
+brief, or ask the user to run `architech` in their own terminal: they answer
+its questions there, and you help them decide and read the result.
+
 ### Trade-offs
 
 - Plus: questions work; the user can attach; long work keeps its context.
@@ -185,7 +218,8 @@ Start from [the brief template](../assets/brief-template.md). It holds:
 
 ## 5. Smoke test (seconds, after `/login`)
 
-Short enough to run in the foreground: the cap stays well under one shell call.
+A minute at most, so it usually fits in one shell call; if your harness's calls
+are shorter, start it detached (section 2).
 
 ```bash
 scripts/run-headless.sh --cwd /abs/path/to/project \

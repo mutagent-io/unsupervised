@@ -12,7 +12,11 @@
     "Which Architech command should I use for a small bug fix?",
     "Dispatch this issue to Architech in the background so it can still ask me questions.",
     "Is Architech up to date? Check for an update.",
-    "Let Architech's agents build this unsupervised while I review the plan."
+    "Let Architech's agents build this unsupervised while I review the plan.",
+    "Delegate this refactor to Architech from my harness and report back when the PR is open.",
+    "My agent harness can run shell commands; use it to start, set up and operate Architech.",
+    "Use Architech as a sub-agent for this bug and relay its questions to me.",
+    "Get Architech installed so my bot can hand it coding tasks."
   ],
   "should_not_trigger": [
     "Explain unsupervised learning.",
@@ -26,6 +30,10 @@
     "Start a tmux session for my dev server.",
     "Review this pull request for bugs.",
     "Install the GitHub CLI.",
-    "Train an autoencoder without labels."
+    "Train an autoencoder without labels.",
+    "Delegate this task to a sub-agent.",
+    "Set up my agent harness with a new MCP server.",
+    "Install the mutagent CLI and log in.",
+    "Run my coding agent headless in a cron job."
   ]
 }

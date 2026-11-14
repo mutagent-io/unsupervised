@@ -12,10 +12,11 @@ approve the plan and the merge.**
 [![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-plugin-black.svg)](https://code.claude.com/docs/en/plugins)
 [![Codex skill](https://img.shields.io/badge/Codex-skill-black.svg)](https://developers.openai.com/codex/skills)
 
-`unsupervised` is an [Agent Skill](https://agentskills.io) for Claude Code and
-Codex. It gets [Architech](https://docs.mutagent.io/architech/overview),
+`unsupervised` is an [Agent Skill](https://agentskills.io) for any agent
+harness that can read files and run shell commands: Claude Code, Codex, or your
+own. It gets [Architech](https://docs.mutagent.io/architech/overview),
 Mutagent's software-engineering harness, installed and running in your
-repository, then lets your coding agent hand work to it.
+repository, then lets your agent hand work to it.
 
 ## What it does
 
@@ -23,8 +24,8 @@ repository, then lets your coding agent hand work to it.
   showing you the script.
 - **Walks you through sign-in and `/onboard`**, and picks Full-Loop or Fast
   Mode for your change.
-- **Lets Claude Code or Codex hand work to Architech**: headless, or in a
-  background session that can still ask you questions.
+- **Lets your agent hand work to Architech**: headless, or in a background
+  session that can still ask you questions. tmux is optional.
 
 ## Install the skill
 
@@ -57,10 +58,23 @@ git clone https://github.com/mutagent-io/unsupervised ~/.agents/skills/unsupervi
 
 Or clone it into a repository's `.agents/skills/` to use it in that repository only.
 
+**Any other harness:** clone or download the repository anywhere your harness
+can read it, then point the harness at it (see [For agents](#for-agents)).
+
 **Pinned:** every release on the
 [releases page](https://github.com/mutagent-io/unsupervised/releases) attaches
 `unsupervised-v<version>.tar.gz`, which unpacks to an `unsupervised/` skill
 folder: copy it into `~/.claude/skills/` or `~/.agents/skills/`.
+
+## For agents
+
+Running a harness that doesn't load skills natively? Read [SKILL.md](SKILL.md)
+and follow its three phases: start (install), setup (sign in, model, onboard)
+and operate (hand work over, relay questions, read results). Its first section
+says what your harness needs and what to do without tmux or without a shell.
+[AGENTS.md](AGENTS.md) points harnesses that load `AGENTS.md` to the same
+place. A user can start you with: "Read github.com/mutagent-io/unsupervised and
+set up Architech in this repo."
 
 ## Then say
 
@@ -71,7 +85,8 @@ folder: copy it into `~/.claude/skills/` or `~/.agents/skills/`.
 ## What is inside
 
 ```text
-SKILL.md                    the skill: rules, quick start, commands, the two hand-over modes
+SKILL.md                    the skill: what a harness needs, rules, start / setup / operate
+AGENTS.md                   pointer to SKILL.md for harnesses that don't load skills
 references/
   install.md                install, verify, update, remove, install problems
   onboard.md                first session, sign-in, /onboard and what it writes

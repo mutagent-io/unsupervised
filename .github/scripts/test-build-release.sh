@@ -22,7 +22,7 @@ check "builds unsupervised-v<version>.tar.gz" yes "$([ -f "$ASSET" ] && echo yes
 if [ -f "$ASSET" ]; then
   mkdir -p "$WORK/x" && tar -xzf "$ASSET" -C "$WORK/x"
   check "unpacks to one unsupervised/ folder" "unsupervised" "$(ls "$WORK/x")"
-  for f in SKILL.md README.md LICENSE CHANGELOG.md references/dispatch.md references/install.md \
+  for f in SKILL.md AGENTS.md README.md LICENSE CHANGELOG.md references/dispatch.md references/install.md \
            assets/icon.png assets/brief-template.md scripts/run-headless.sh agents/openai.yaml \
            .claude-plugin/plugin.json .claude-plugin/marketplace.json; do
     check "ships $f" yes "$([ -f "$WORK/x/unsupervised/$f" ] && echo yes || echo no)"

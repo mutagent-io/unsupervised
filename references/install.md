@@ -11,6 +11,9 @@ docs disagree, follow the docs.
   and saves it once it is accepted.
 - Access to a model provider. Sign-in happens later, inside the session.
 
+If your harness cannot run shell commands, give the user each command on this
+page and ask them to paste back what it prints.
+
 ## 2. Check what is already there
 
 ```bash
@@ -41,8 +44,8 @@ checksum, and prints where it installed the `architech` command.
 
 ## 4. The user runs it in their own terminal
 
-The installer reads the email from the terminal. An agent's shell tool has no
-terminal, so the installer stops with "a terminal is required". Hand the user
+The installer reads the email from the terminal. An agent harness's shell has
+no terminal, so the installer stops with "a terminal is required". Hand the user
 this command, exactly:
 
 ```bash

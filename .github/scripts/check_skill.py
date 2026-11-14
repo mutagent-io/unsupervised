@@ -16,12 +16,17 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 REFERENCES = ["install.md", "onboard.md", "workflows.md", "dispatch.md", "faq.md"]
 REQUIRED = [
-    "SKILL.md", "README.md", "LICENSE", "CHANGELOG.md", "CONTRIBUTING.md",
+    "SKILL.md", "AGENTS.md", "README.md", "LICENSE", "CHANGELOG.md", "CONTRIBUTING.md",
     ".claude-plugin/plugin.json", ".claude-plugin/marketplace.json",
     "agents/openai.yaml", "assets/brief-template.md", "assets/icon.png",
     "scripts/run-headless.sh", "evals/triggers.json",
 ] + [f"references/{r}" for r in REFERENCES]
 LINK_RE = re.compile(r"\]\(([^)#\s]+)(?:#[^)]*)?\)")
+# Host-neutral: hosts are named only in SKILL.md's per-host table section.
+HOSTS_RE = re.compile(r"Claude Code|Codex|GrokBot")
+HOST_TOOL_RE = re.compile(r"Skill tool|Bash tool|run_in_background|background option|shell tool's", re.I)
+HOST_SECTION_RE = re.compile(r"^## .*harness", re.I)
+PHASES = ("Start", "Setup", "Operate")
 
 failures: list[str] = []
 
@@ -109,6 +114,57 @@ def check_skill_md() -> dict[str, str]:
     return fm
 
 
+def check_host_neutral(fm: dict[str, str]) -> None:
+    desc = fm.get("description", "")
+    if "Claude Code or Codex" in desc:
+        fail("description ties the skill to Claude Code or Codex; describe any agent harness")
+    if not re.search(r"any (?:agent|coding agent|harness)", desc, re.I):
+        fail("description must say the skill works from any agent harness")
+    text = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+    body = text.split("\n---\n", 1)[1]
+    section, host_sections = "", 0
+    for line in body.splitlines():
+        if line.startswith("## "):
+            section = line
+            host_sections += bool(HOST_SECTION_RE.match(line))
+        if HOSTS_RE.search(line) and not HOST_SECTION_RE.match(section):
+            fail(f"SKILL.md names a host outside the per-host section: {line.strip()[:80]!r}")
+        if HOST_TOOL_RE.search(line):
+            fail(f"SKILL.md uses a host tool name: {line.strip()[:80]!r}")
+    if host_sections != 1:
+        fail("SKILL.md needs exactly one '## ... harness' section holding the per-host table")
+    for row in ("Claude Code", "Codex", "Other harnesses"):
+        if not re.search(rf"^\| \*\*{row}", body, re.M):
+            fail(f"the per-host table needs a row for {row}")
+    for phase in PHASES:
+        if not re.search(rf"^## \d+\. {phase}\b", body, re.M):
+            fail(f"SKILL.md needs a '## n. {phase}' phase section")
+    for p in [*sorted((ROOT / "references").glob("*.md")), ROOT / "assets/brief-template.md",
+              ROOT / "scripts/run-headless.sh", ROOT / "AGENTS.md"]:
+        if not p.is_file():
+            continue
+        for n, line in enumerate(p.read_text(encoding="utf-8").splitlines(), 1):
+            if HOSTS_RE.search(line) or HOST_TOOL_RE.search(line):
+                fail(f"{p.relative_to(ROOT)}:{n} is host-specific (host notes live in SKILL.md's table): {line.strip()[:70]!r}")
+
+
+def check_entry_point() -> None:
+    """AGENTS.md and README point harnesses to SKILL.md without copying it."""
+    p = ROOT / "AGENTS.md"
+    if p.is_file():
+        text = p.read_text(encoding="utf-8")
+        if "SKILL.md" not in text:
+            fail("AGENTS.md must point to SKILL.md")
+        if text.count("\n") > 30 or "```" in text:
+            fail("AGENTS.md must stay a short pointer (<=30 lines, no command blocks)")
+    readme = (ROOT / "README.md").read_text(encoding="utf-8") if (ROOT / "README.md").is_file() else ""
+    m = re.search(r"^## For agents\b(.*?)(?=^## |\Z)", readme, re.M | re.S)
+    if not m:
+        fail("README.md needs a '## For agents' section")
+    elif "SKILL.md" not in m.group(1) or "```" in m.group(1):
+        fail("README's 'For agents' section must point to SKILL.md, not copy commands")
+
+
 def check_links() -> None:
     files = [ROOT / "SKILL.md", ROOT / "README.md"] + [ROOT / "references" / r for r in REFERENCES]
     for p in files:
@@ -183,11 +239,17 @@ def check_triggers(fm: dict[str, str]) -> None:
     for prompt in should:
         if "architech" not in prompt.lower():
             fail(f"should_trigger prompt does not name Architech: {prompt!r}")
+    generic = [p for p in should if re.search(r"harness|delegat|sub-agent|my bot|my agent", p, re.I)]
+    if len(generic) < 3:
+        fail("evals/triggers.json needs at least 3 should_trigger prompts phrased by a generic harness user")
 
 
 def main() -> int:
     check_files()
     fm = check_skill_md() if (ROOT / "SKILL.md").is_file() else {}
+    if fm:
+        check_host_neutral(fm)
+    check_entry_point()
     check_links()
     if fm and (ROOT / ".claude-plugin/plugin.json").is_file():
         check_versions(fm)

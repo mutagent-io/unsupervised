@@ -14,6 +14,13 @@ Keep it small, and treat every file as public.
 - **No `CLAUDE.md` in this repository.** The root is the installed skill
   folder, and a `CLAUDE.md` here could load into users' sessions. Maintainer
   notes belong in this file.
+- **`AGENTS.md` stays a pointer.** It sends harnesses that don't load skills
+  natively to `SKILL.md`, and says to ignore it otherwise, so it is harmless if
+  a harness loads it into an unrelated session. Never copy steps into it.
+- **Harness-neutral.** Host names (Claude Code, Codex, ...) and host tool
+  names appear only in SKILL.md section 1's per-host table. Everywhere else,
+  describe the capability ("if your harness can run a command in the
+  background..."). `check_skill.py` enforces this.
 - **No `allowed-tools` in `SKILL.md`.** A public skill does not pre-approve its
   own shell commands.
 - Keep `SKILL.md` under 500 lines and the `description` under 1024 characters,
@@ -23,7 +30,8 @@ Keep it small, and treat every file as public.
 
 | Path | What to edit |
 |---|---|
-| `SKILL.md` | The skill: rules, quick start, commands, the two hand-over modes |
+| `SKILL.md` | The skill: what a harness needs, rules, start / setup / operate, commands |
+| `AGENTS.md` | A pointer to `SKILL.md` for harnesses that don't load skills |
 | `references/*.md` | One page per user journey |
 | `assets/brief-template.md` | The headless hand-over brief |
 | `scripts/run-headless.sh` | The headless runner (bash only) |

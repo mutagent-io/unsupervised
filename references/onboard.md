@@ -2,6 +2,19 @@
 
 Source of truth: https://docs.mutagent.io/architech/onboard
 
+## 0. Who does what
+
+Two parts of setup are the user's: signing in (`/login`, their keys) and the
+approvals `/onboard` asks for. If you are an agent helping:
+
+- With tmux and a way to ask the user, start a background session (see
+  [dispatch.md, section 3](dispatch.md)). The user attaches for `/login` and
+  `/model`; you type `/onboard` and relay each question.
+- Otherwise the user runs `architech` in their own terminal and types the
+  commands below; you help them answer.
+- Never run `/onboard` headless: it asks before it scans and before it writes,
+  and a headless run cannot ask.
+
 ## 1. Open the project
 
 ```bash

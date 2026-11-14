@@ -32,6 +32,10 @@ do not merge", and this skill never runs `/ship` headless.
 
 ## Using it
 
+**Does it work with my own agent harness?** Yes, if the harness can read files
+and run shell commands. tmux and background commands help but are optional; see
+section 1 of [SKILL.md](../SKILL.md).
+
 **Do I need a GitHub board?** No. Without one, Architech still works for local
 software work. You can add a board later by running `/onboard` again.
 

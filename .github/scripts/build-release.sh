@@ -27,7 +27,7 @@ mkdir -p "$OUT"; OUT="$(cd "$OUT" && pwd)"
 STAGE="$(mktemp -d)"
 trap 'rm -rf "$STAGE"' EXIT
 mkdir "$STAGE/unsupervised"
-(cd "$ROOT" && cp -R SKILL.md README.md LICENSE CHANGELOG.md references assets scripts agents .claude-plugin \
+(cd "$ROOT" && cp -R SKILL.md AGENTS.md README.md LICENSE CHANGELOG.md references assets scripts agents .claude-plugin \
   "$STAGE/unsupervised/")
 ASSET="$OUT/unsupervised-$TAG.tar.gz"
 tar -czf "$ASSET" -C "$STAGE" unsupervised
