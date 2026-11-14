@@ -27,6 +27,11 @@ HOSTS_RE = re.compile(r"Claude Code|Codex|GrokBot")
 HOST_TOOL_RE = re.compile(r"Skill tool|Bash tool|run_in_background|background option|shell tool's", re.I)
 HOST_SECTION_RE = re.compile(r"^## .*harness", re.I)
 PHASES = ("Start", "Setup", "Operate")
+# A private tmux server must not load the user's config (plugins can restore or
+# autosave their sessions into it).
+TMUX_START_RE = re.compile(r"tmux\b[^`\n]*?\bnew-session")
+# The runner lives in the skill's folder, not the project: always an absolute path.
+RUNNER_REL_RE = re.compile(r"(?<!<skill-dir>/)\bscripts/run-headless\.sh")
 
 failures: list[str] = []
 
@@ -148,6 +153,26 @@ def check_host_neutral(fm: dict[str, str]) -> None:
                 fail(f"{p.relative_to(ROOT)}:{n} is host-specific (host notes live in SKILL.md's table): {line.strip()[:70]!r}")
 
 
+def check_operate_safety() -> None:
+    """tmux servers start with -f /dev/null; runner calls use <skill-dir>/scripts/."""
+    docs = [ROOT / "SKILL.md", ROOT / "AGENTS.md", ROOT / "README.md", *sorted((ROOT / "references").glob("*.md"))]
+    for p in docs:
+        if not p.is_file():
+            continue
+        for n, line in enumerate(p.read_text(encoding="utf-8").splitlines(), 1):
+            for m in TMUX_START_RE.finditer(line):
+                if "-f /dev/null" not in m.group(0):
+                    fail(f"{p.relative_to(ROOT)}:{n} starts tmux without -f /dev/null: {line.strip()[:70]!r}")
+            if RUNNER_REL_RE.search(line):
+                fail(f"{p.relative_to(ROOT)}:{n} calls the runner by a relative path; use <skill-dir>/scripts/run-headless.sh")
+    skill = (ROOT / "SKILL.md").read_text(encoding="utf-8") if (ROOT / "SKILL.md").is_file() else ""
+    if not re.search(r"`<skill-dir>`.*folder", skill):
+        fail("SKILL.md must say what <skill-dir> is (the folder holding SKILL.md)")
+    dispatch = (ROOT / "references/dispatch.md").read_text(encoding="utf-8")
+    if "pgid.txt" not in dispatch or not re.search(r"[Nn]o `verdict\.txt`", dispatch):
+        fail("dispatch.md must cover the hard-kill outcome: no verdict.txt, stop the group named in pgid.txt")
+
+
 def check_entry_point() -> None:
     """AGENTS.md and README point harnesses to SKILL.md without copying it."""
     p = ROOT / "AGENTS.md"
@@ -249,6 +274,7 @@ def main() -> int:
     fm = check_skill_md() if (ROOT / "SKILL.md").is_file() else {}
     if fm:
         check_host_neutral(fm)
+    check_operate_safety()
     check_entry_point()
     check_links()
     if fm and (ROOT / ".claude-plugin/plugin.json").is_file():

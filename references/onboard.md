@@ -9,7 +9,8 @@ approvals `/onboard` asks for. If you are an agent helping:
 
 - With tmux and a way to ask the user, start a background session (see
   [dispatch.md, section 3](dispatch.md)). The user attaches for `/login` and
-  `/model`; you type `/onboard` and relay each question.
+  `/model`, and you don't read the pane meanwhile; then you type `/onboard`
+  and relay each question.
 - Otherwise the user runs `architech` in their own terminal and types the
   commands below; you help them answer.
 - Never run `/onboard` headless: it asks before it scans and before it writes,

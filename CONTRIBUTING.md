@@ -21,6 +21,9 @@ Keep it small, and treat every file as public.
   names appear only in SKILL.md section 1's per-host table. Everywhere else,
   describe the capability ("if your harness can run a command in the
   background..."). `check_skill.py` enforces this.
+- **Operate safely from anywhere.** Every `tmux ... new-session` in the docs
+  starts its private server with `-f /dev/null`, and every runner call is
+  `<skill-dir>/scripts/run-headless.sh`. `check_skill.py` enforces both.
 - **No `allowed-tools` in `SKILL.md`.** A public skill does not pre-approve its
   own shell commands.
 - Keep `SKILL.md` under 500 lines and the `description` under 1024 characters,

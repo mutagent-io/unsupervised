@@ -7,7 +7,15 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 SCRIPT="$ROOT/scripts/run-headless.sh"
 WORK="$(mktemp -d)"
-trap 'rm -rf "$WORK"' EXIT
+# On exit, stop any fake left by a failing case, then remove the scratch dir.
+cleanup() {
+  local f
+  for f in "$WORK"/*.pid "$WORK"/*.pid.fake; do
+    [ -s "$f" ] && kill -KILL "$(cat "$f")" 2>/dev/null
+  done
+  rm -rf "$WORK"
+}
+trap cleanup EXIT
 mkdir -p "$WORK/bin" "$WORK/project"
 # Hold stdin open the way an agent's shell does (a FIFO opened read-write never
 # reaches end-of-file), so the fake can tell whether the script closed it.
@@ -32,7 +40,13 @@ case "${FAKE_MODE:-done}" in
 esac
 FAKE
 chmod +x "$WORK/bin/architech"
-export PATH="$WORK/bin:$PATH"
+# Fake-only PATH: the fake architech and system tools, never a real install.
+TOOL_DIRS=""
+for t in python3 tmux; do
+  d="$(dirname "$(command -v "$t" 2>/dev/null || echo /usr/bin/x)")"
+  [ -x "$d/architech" ] || TOOL_DIRS="$TOOL_DIRS:$d"   # never a dir that holds a real one
+done
+export PATH="$WORK/bin:/usr/bin:/bin:/usr/sbin:/sbin$TOOL_DIRS"
 
 PASS=0; FAILN=0
 check() { # name expected actual
@@ -134,6 +148,47 @@ check "refuses a /ship prompt (headless never merges)" 2 \
 printf '\n  /ship 12\n' >"$WORK/ship-brief.md"
 check "refuses a brief that starts with /ship" 2 \
   "$("$SCRIPT" --cwd "$WORK/project" --brief "$WORK/ship-brief.md" >/dev/null 2>&1; echo $?)"
+
+check "the only architech on PATH is the fake" "$WORK/bin/architech" "$(command -v architech)"
+
+# A hard kill (SIGKILL) of the runner cannot be trapped: no verdict, and Architech's
+# group keeps running. pgid.txt names that group so the caller can stop exactly it.
+pidfile="$WORK/grandchild-kill.pid"
+FAKE_MODE=hang FAKE_PIDFILE="$pidfile" "$SCRIPT" --cwd "$WORK/project" --prompt x \
+  --timeout 600 --run "$WORK/run-kill" >/dev/null 2>&1 &
+runner=$!
+for _ in $(seq 50); do [ -s "$pidfile" ] && break; sleep 0.2; done
+check "pgid.txt names Architech's process group" \
+  "$(ps -o pgid= -p "$(cat "$pidfile.fake")" | tr -d ' ')" "$(cat "$WORK/run-kill/pgid.txt" 2>/dev/null)"
+kill -KILL "$runner"; wait "$runner" 2>/dev/null || true; sleep 1
+check "a hard kill leaves no verdict" none "$([ -e "$WORK/run-kill/verdict.txt" ] && echo written || echo none)"
+check "a hard kill leaves Architech running" alive \
+  "$(kill -0 "$(cat "$pidfile.fake")" 2>/dev/null && echo alive || echo gone)"
+kill -TERM -- -"$(cat "$WORK/run-kill/pgid.txt" 2>/dev/null || echo 999999)" 2>/dev/null || true; sleep 1
+for which in "$pidfile" "$pidfile.fake"; do
+  check "the documented cleanup stops $(basename "$which")" gone \
+    "$(kill -0 "$(cat "$which" 2>/dev/null || echo 999999)" 2>/dev/null && echo alive || echo gone)"
+done
+
+# Operate option 3 exactly as documented: the runner inside a detached tmux session
+# on a private server with no user config, started from the project directory with
+# the skill's absolute script path. The temp HOME carries a hostile ~/.tmux.conf
+# (keeps dead panes open); -f /dev/null must keep it out.
+if command -v tmux >/dev/null 2>&1; then
+  mkdir -p "$WORK/home"; echo 'set -g remain-on-exit on' >"$WORK/home/.tmux.conf"
+  sock="unsup-test-$$"
+  (cd "$WORK/project" && env -i HOME="$WORK/home" PATH="$PATH" TERM=xterm FAKE_MODE=done \
+    tmux -L "$sock" -f /dev/null new-session -d -s run-t \
+    "$SCRIPT --cwd $WORK/project --prompt x --run $WORK/run-tmux --timeout 60")
+  for _ in $(seq 50); do [ -s "$WORK/run-tmux/verdict.txt" ] && break; sleep 0.2; done
+  sleep 1
+  check "option 3 from the project dir: verdict DONE" DONE "$(cat "$WORK/run-tmux/verdict.txt" 2>/dev/null)"
+  check "option 3: the private server exits by itself" gone \
+    "$(env -i HOME="$WORK/home" PATH="$PATH" tmux -L "$sock" has-session 2>/dev/null && echo alive || echo gone)"
+  env -i HOME="$WORK/home" PATH="$PATH" tmux -L "$sock" kill-session -t '=run-t' 2>/dev/null || true
+else
+  echo "skip option 3 (tmux not installed)"
+fi
 
 check "rejects a missing --cwd"     2 "$("$SCRIPT" --prompt x >/dev/null 2>&1; echo $?)"
 check "rejects a non-numeric cap"   2 "$("$SCRIPT" --cwd "$WORK/project" --prompt x --timeout 1m >/dev/null 2>&1; echo $?)"

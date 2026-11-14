@@ -4,8 +4,9 @@
 #   run-headless.sh --cwd /abs/project (--brief /abs/brief.md | --prompt "text")
 #                   [--timeout 900] [--run /abs/run-dir]
 #
-# Writes RUN/out.txt (answer), RUN/err.txt, RUN/rc.txt, RUN/verdict.txt and prints one
-# line: run=<dir> rc=<code> verdict=<DONE|BLOCKED|FAILED|NO_VERDICT|TIMEOUT|INTERRUPTED>.
+# Writes RUN/out.txt (answer), RUN/err.txt, RUN/rc.txt, RUN/verdict.txt, RUN/pgid.txt
+# (Architech's process group, for cleanup after a hard kill of this script) and prints
+# one line: run=<dir> rc=<code> verdict=<DONE|BLOCKED|FAILED|NO_VERDICT|TIMEOUT|INTERRUPTED>.
 # Stdin is closed for the child. At the cap, or when this script is stopped (TERM, INT,
 # HUP), the child's whole process group is stopped, so nothing keeps running unwatched.
 # Exits 0 once a verdict is written (read the verdict), 128+signal when interrupted,
@@ -19,7 +20,7 @@ while [ $# -gt 0 ]; do
     --prompt) PROMPT="${2:-}"; shift 2 ;;
     --timeout) CAP="${2:-}"; shift 2 ;;
     --run) RUN="${2:-}"; shift 2 ;;
-    -h|--help) sed -n '2,12p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,13p' "$0"; exit 0 ;;
     *) echo "unknown argument: $1" >&2; exit 2 ;;
   esac
 done
@@ -63,6 +64,7 @@ trap 'on_signal 15' TERM
 set -m  # the child runs in its own process group, so one signal stops all of it
 ( cd "$CWD" && exec architech -p "$PROMPT" </dev/null >"$RUN/out.txt" 2>"$RUN/err.txt" ) &
 PID=$!
+echo "$PID" >"$RUN/pgid.txt"  # the subshell leads its own group: its PID is the group ID
 set +m  # job control for the launch only: the polling sleeps stay in this script's group,
         # so a terminal Ctrl-C reaches this script and its INT trap
 SECS=0; RC=""

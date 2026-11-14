@@ -29,9 +29,13 @@ and ended `BLOCKED`. So the brief carries every answer up front and says
 ### The one command
 
 ```text
-scripts/run-headless.sh --cwd <project> (--brief <file> | --prompt "<text>")
-                        [--timeout <seconds>] [--run <dir>]
+<skill-dir>/scripts/run-headless.sh --cwd <project> (--brief <file> | --prompt "<text>")
+                                    [--timeout <seconds>] [--run <dir>]
 ```
+
+`<skill-dir>` is the folder holding the skill's `SKILL.md`; the runner is
+there, not in the project. Call it by its absolute path so it works whatever
+directory your shell is in.
 
 It runs `architech -p` from the project directory with stdin closed and caps
 the wall clock (without `timeout`, which macOS lacks). At the cap, or when the
@@ -43,34 +47,53 @@ group and still writes a verdict. It refuses a prompt that starts with `/ship`.
 Most harnesses limit how long one shell call may run, and a real task takes
 longer. Start the runner so it keeps going after the call returns, then check
 for `verdict.txt` every minute or so. Use the first of these your harness
-supports:
+supports. If you don't know how it ends a call and tmux is installed, go
+straight to option 3: it is the one that doesn't depend on the call.
 
-1. **Its own way to run a command in the background**, if it has one: run the plain runner command
-   with it.
+1. **Its own way to run a command in the background**, if it has one: run the
+   plain runner command with it.
 2. **`nohup ... &`**, if processes it starts survive the end of a call:
 
    ```bash
    mkdir -p /abs/run
-   nohup scripts/run-headless.sh --cwd /abs/path/to/project \
+   nohup <skill-dir>/scripts/run-headless.sh --cwd /abs/path/to/project \
      --brief /abs/run/brief.md --run /abs/run --timeout 1800 >/abs/run/runner.log 2>&1 &
    ```
 
 3. **A detached tmux session**, if tmux is installed: the tmux server keeps
    the runner alive whatever happens to the call, and the session closes by
-   itself when the runner is done (checked on 0.1.46).
+   itself when the runner is done (checked on 0.1.46). `-f /dev/null` keeps the
+   user's tmux config out of this private server: plugins in it can restore
+   their saved sessions into it, or save over them.
 
    ```bash
    mkdir -p /abs/run
-   tmux -L unsupervised new-session -d -s run-<task> \
-     "scripts/run-headless.sh --cwd /abs/path/to/project --brief /abs/run/brief.md --run /abs/run --timeout 1800"
+   tmux -L unsupervised -f /dev/null new-session -d -s run-<task> \
+     "<skill-dir>/scripts/run-headless.sh --cwd /abs/path/to/project --brief /abs/run/brief.md --run /abs/run --timeout 1800"
    ```
 
 4. **None of these:** keep `--timeout` under one call's limit, or ask the user
    to run the runner in their own terminal and tell you the run directory.
 
-Not sure which applies? Start the smoke test (section 5) with option 2 and
-check its run directory in your next call: `DONE` means detached processes
-survive; `INTERRUPTED` means your harness stopped it, so use option 3 or 4.
+Not sure whether option 2 works? Start the smoke test (section 5) with it and
+check its run directory in your next call. `INTERRUPTED` or no verdict at all
+means your harness stops what a call started: use option 3 or 4. `DONE` proves
+less than it seems: only that a run lasting a few seconds outlived the call. A
+harness may still stop leftovers later, or when its session ends, so prefer
+option 3 for long runs whenever tmux is installed.
+
+### When no verdict appears
+
+Each time you check, one of three things is true:
+
+| What you see | Meaning | Do this |
+|---|---|---|
+| `verdict.txt` exists | The run ended | Read it (verdicts below) |
+| No `verdict.txt`; the runner is still running (`pgrep -fl "run-headless.sh .*--run /abs/run"`) | Still working | Wait and check again |
+| No `verdict.txt`; the runner is gone | Your harness killed the runner outright (a hard kill no script can catch). Architech may still be running, with no cap and nobody watching | Stop exactly that run: `kill -TERM -- -"$(cat /abs/run/pgid.txt)"`. Then start it again with option 3 or 4 |
+
+`pgid.txt` names Architech's process group for this run only, so the command
+above never touches another run or the user's own sessions.
 
 The run directory holds:
 
@@ -79,6 +102,7 @@ The run directory holds:
 | `out.txt` | Architech's answer |
 | `err.txt` | Errors (sign-in, provider, network) |
 | `rc.txt` | Exit code (124 = stopped at the cap; 128+n = the script got signal n) |
+| `pgid.txt` | Architech's process group, for stopping it after a hard kill |
 | `verdict.txt` | `DONE`, `BLOCKED`, `FAILED`, `NO_VERDICT`, `TIMEOUT` or `INTERRUPTED` |
 
 It prints one line, `run=<dir> rc=<code> verdict=<verdict>`, and exits 0 once a
@@ -138,8 +162,10 @@ second option, and the session carried on with that answer.
 
 Two rules for every tmux command:
 
-- **Its own server:** always `-L unsupervised`. Your sessions then live apart
-  from the user's own tmux sessions, and nothing you do can touch theirs.
+- **Its own server, with no user config:** always `-L unsupervised`, and
+  start it with `-f /dev/null`. Your sessions then live apart from the user's
+  own, and none of their tmux config (plugins that restore or save sessions,
+  panes that stay open) runs in yours.
 - **Exact targets:** `-t '=arch-<task>'` for session commands and
   `-t '=arch-<task>:'` (with the colon) for pane commands. A bare
   `-t arch-<task>` also matches a longer name that starts with it, so it can
@@ -147,7 +173,7 @@ Two rules for every tmux command:
 
 | Step | Command |
 |---|---|
-| Start | `tmux -L unsupervised new-session -d -s arch-<task> -x 160 -y 50 -c /abs/path/to/project architech` |
+| Start | `tmux -L unsupervised -f /dev/null new-session -d -s arch-<task> -x 160 -y 50 -c /abs/path/to/project architech` |
 | Type a task | `tmux -L unsupervised send-keys -t '=arch-<task>:' -l '<text>'` then `tmux -L unsupervised send-keys -t '=arch-<task>:' Enter` |
 | Read | `tmux -L unsupervised capture-pane -p -t '=arch-<task>:' -S -200` |
 | Answer a menu | `tmux -L unsupervised send-keys -t '=arch-<task>:' Down` (or `Up`) to move, then the same with `Enter` to pick |
@@ -179,6 +205,11 @@ on that server, including other tasks'.
 | Plan approval, merge, anything destructive | **The user.** Relay it word for word with the options; type their answer |
 | A clarifying question the brief already answers | You. Then tell the user what you answered |
 | Unsure which kind it is | Relay it |
+
+A delegated sub-agent that cannot reach the user runs headless only, or passes
+each question back to you word for word; it never answers a plan, merge or
+destructive question itself. While the user is in `/login` in the pane, don't
+read the pane; wait until they say they're done.
 
 ### Reading the pane
 
@@ -222,7 +253,7 @@ A minute at most, so it usually fits in one shell call; if your harness's calls
 are shorter, start it detached (section 2).
 
 ```bash
-scripts/run-headless.sh --cwd /abs/path/to/project \
+<skill-dir>/scripts/run-headless.sh --cwd /abs/path/to/project \
   --prompt 'Reply with exactly two lines: PONG, then VERDICT: DONE' --timeout 60
 # -> ... verdict=DONE
 ```

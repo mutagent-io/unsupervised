@@ -151,23 +151,35 @@ either mode; shell without tmux -> headless only, or the user runs the
 session; no shell -> the user runs Architech and you write the brief and read
 what they paste back.
 
+`<skill-dir>` below is the folder that holds this SKILL.md. The runner lives
+in its `scripts/` folder, not in the project, so always call it by its absolute
+path; the commands then work from any directory.
+
 **Headless**, with the bundled runner. It closes stdin, caps the wall clock,
-grades the result, refuses `/ship`, and if anything stops it early it stops
-Architech too and writes `INTERRUPTED`. A run usually outlasts one shell call,
-so start it detached and check for the verdict later:
+grades the result, refuses `/ship`, and if it is stopped early (TERM, INT, HUP)
+it stops Architech too and writes `INTERRUPTED`. A run usually outlasts one
+shell call, so start it detached and check for the verdict later. When you
+don't know how your harness ends a call and tmux is installed, use tmux: the
+run then doesn't depend on the call at all.
 
 ```bash
 mkdir -p /abs/run
-nohup scripts/run-headless.sh --cwd /abs/path/to/project \
+# with tmux (a private server that loads no user config):
+tmux -L unsupervised -f /dev/null new-session -d -s run-fix-login \
+  "<skill-dir>/scripts/run-headless.sh --cwd /abs/path/to/project --brief /abs/run/brief.md --run /abs/run --timeout 1800"
+# without tmux (or use your harness's own way to run in the background):
+nohup <skill-dir>/scripts/run-headless.sh --cwd /abs/path/to/project \
   --brief /abs/run/brief.md --run /abs/run --timeout 1800 >/abs/run/runner.log 2>&1 &
-# later, until it exists:
+# later:
 cat /abs/run/verdict.txt   # DONE|BLOCKED|FAILED|NO_VERDICT|TIMEOUT|INTERRUPTED
 ```
 
-If your harness has its own way to run a command in the background, use that
-instead of `nohup`. If it stops everything a call started (the verdict comes
-back `INTERRUPTED` at once), start the runner inside a detached tmux session,
-or ask the user to run it: [references/dispatch.md](references/dispatch.md).
+When you check, there are three outcomes. `verdict.txt` exists: read it. No
+verdict yet and the runner is still running: wait. **No verdict and the runner
+is gone**: your harness killed it outright, which no script can catch, and
+Architech may still be running unwatched. Stop exactly that run with
+`kill -TERM -- -"$(cat /abs/run/pgid.txt)"`, then use tmux or ask the user to
+run it. Details: [references/dispatch.md](references/dispatch.md).
 Write the brief from [assets/brief-template.md](assets/brief-template.md):
 absolute paths, the output file, "open a pull request, do not merge", and a
 last-line `VERDICT:`. The run cannot ask, so the brief holds every answer.
@@ -177,7 +189,7 @@ server of its own, type the task, and read the pane until it finishes or asks
 something.
 
 ```bash
-tmux -L unsupervised new-session -d -s arch-fix-login -x 160 -y 50 -c /abs/path/to/project architech
+tmux -L unsupervised -f /dev/null new-session -d -s arch-fix-login -x 160 -y 50 -c /abs/path/to/project architech
 tmux -L unsupervised send-keys -t '=arch-fix-login:' -l '<task>'
 tmux -L unsupervised send-keys -t '=arch-fix-login:' Enter
 tmux -L unsupervised capture-pane -p -t '=arch-fix-login:' -S -200
@@ -185,7 +197,9 @@ tmux -L unsupervised send-keys -t '=arch-fix-login:' -l '/exit'   # when done, t
 ```
 
 Always pass `-L unsupervised`, so you never touch the user's own tmux
-sessions, and an exact target (`'=name'`, plus `:` for pane commands): a bare
+sessions; start that server with `-f /dev/null`, so it loads none of their
+tmux config (plugins in it can restore or save their sessions); and use an
+exact target (`'=name'`, plus `:` for pane commands): a bare
 `-t name` also matches a longer name that starts with it. Never run
 `tmux kill-server`. If `/exit` gets no answer, stop the pane's process group,
 not just the tmux session: [references/dispatch.md](references/dispatch.md).
@@ -193,9 +207,14 @@ not just the tmux session: [references/dispatch.md](references/dispatch.md).
 **Relaying questions:** every plan, merge or destructive question goes to the
 user word for word, with its options; type their answer. Answer a clarifying
 question yourself only when the brief already holds the answer, and say so.
+While the user is in `/login` in the pane, don't read the pane: wait until they
+say they're done.
 
 **Delegation:** if your harness delegates to sub-agents, give each run its own
-brief, run directory and session name. The merge stays with the user.
+brief, run directory and session name. A sub-agent that cannot reach the user
+runs headless only, or passes each question back to you word for word; it
+never answers a plan, merge or destructive question itself. The merge stays
+with the user.
 
 ## 6. Commands
 
@@ -237,7 +256,7 @@ Full-Loop. Details: [references/workflows.md](references/workflows.md).
 | `Email must look like name@example.com` | Retype it in that form |
 | `Email not accepted (waitlist)` | The download service did not take that address: check the spelling and rerun; `--reset` enters a different one |
 | No model answers in the session | `/login`, then `/model`; `architech doctor --strict` shows what it found |
-| A headless run never returns | Use `scripts/run-headless.sh`; by hand, close stdin (`</dev/null`) and cap the time |
+| A headless run never returns | Use `<skill-dir>/scripts/run-headless.sh`; by hand, close stdin (`</dev/null`) and cap the time |
 | A headless run ends with `NO_VERDICT` or `BLOCKED` | It could not ask you: read `out.txt`, add the missing answer to the brief, run again |
 | A headless run ends `INTERRUPTED` | Something stopped the runner (often the shell call ending); Architech was stopped too. Start it detached (section 5) |
 | Onboarding wants to change files you care about | Decline that step; it never overwrites context you wrote |
