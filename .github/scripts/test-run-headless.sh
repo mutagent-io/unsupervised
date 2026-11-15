@@ -11,7 +11,7 @@ WORK="$(mktemp -d)"
 cleanup() {
   local f
   for f in "$WORK"/*.pid "$WORK"/*.pid.fake; do
-    [ -s "$f" ] && kill -KILL "$(cat "$f")" 2>/dev/null
+    [ -s "$f" ] && kill -KILL "$(cat "$f")" 2>/dev/null || true
   done
   rm -rf "$WORK"
 }

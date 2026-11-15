@@ -240,8 +240,9 @@ def check_versions(fm: dict[str, str]) -> None:
     entries = [p for p in market.get("plugins", []) if p.get("name") == "unsupervised"]
     if not entries or entries[0].get("version") != version:
         fail(f"marketplace.json version does not match skill_version {version}")
-    if plugin.get("skills") != ["."]:
-        fail('plugin.json must declare "skills": ["."] (the repo root is the skill)')
+    # "./", not ".": older Claude Code releases reject a bare "." here.
+    if plugin.get("skills") != ["./"]:
+        fail('plugin.json must declare "skills": ["./"] (the repo root is the skill)')
     first = re.search(r"^## \[([^\]]+)\]", (ROOT / "CHANGELOG.md").read_text(), re.M)
     if not first or first.group(1) != version:
         fail(f"CHANGELOG.md top entry is not [{version}]")
