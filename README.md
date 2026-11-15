@@ -30,7 +30,7 @@ your board and taking work.
   sub-issue per task, on your GitHub Project board.
 - **Agents that build the tasks in parallel** and open the pull requests.
 - **Review by an agent that didn't write the code.** It sends work back to
-  the builder until it passes; after two rounds, it comes to you.
+  the builder; after two rounds, it comes to you.
 - **CI that bounces back.** On the cloud factory, failed CI on its branch
   sends the work back to the builder, not to you.
 - **A pull request waiting for one decision: yours.**
