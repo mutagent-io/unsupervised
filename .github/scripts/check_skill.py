@@ -14,7 +14,11 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-REFERENCES = ["install.md", "onboard.md", "workflows.md", "dispatch.md", "faq.md"]
+REFERENCES = ["install.md", "onboard.md", "workflows.md", "dispatch.md", "factory.md", "faq.md"]
+# Label roles only a person may add (docs.mutagent.io/factory/reference/factory-yaml#labels),
+# by their default names. factory.md must name each one in its safety rules.
+PERSON_LABELS = ("factory:pickup", "factory:approved", "factory:changes", "merge-ready",
+                 "merge:changes", "merge:hold", "merge:yolo")
 REQUIRED = [
     "SKILL.md", "AGENTS.md", "README.md", "LICENSE", "CHANGELOG.md", "CONTRIBUTING.md",
     ".claude-plugin/plugin.json", ".claude-plugin/marketplace.json",
@@ -191,6 +195,33 @@ def check_operate_safety() -> None:
         fail("dispatch.md must cover the hard-kill outcome: no verdict.txt, stop the group named in pgid.txt")
 
 
+def check_factory(fm: dict[str, str]) -> None:
+    """The Software Factory page: linked, its CLI not confused with the Agent Factory's,
+    and the person-only rules (labels, merge, destructive commands) stated."""
+    p = ROOT / "references/factory.md"
+    if not p.is_file():
+        return
+    if "Software Factory" not in fm.get("description", ""):
+        fail("description must name the Software Factory")
+    skill = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+    if "(references/factory.md)" not in skill:
+        fail("SKILL.md must link references/factory.md")
+    text = " ".join(p.read_text(encoding="utf-8").split())
+    if "`architech factory`" not in text or "`mutagent factory`" not in text or "Agent Factory" not in text:
+        fail("factory.md must say the Software Factory CLI is `architech factory`, not `mutagent factory` (the Agent Factory)")
+    safety = re.search(r"^## \d+\. Safety\b(.*?)(?=^## |\Z)", p.read_text(encoding="utf-8"), re.M | re.S)
+    if not safety:
+        fail("factory.md needs a '## n. Safety' section")
+        return
+    rules = " ".join(safety.group(1).split())
+    for label in PERSON_LABELS:
+        if f"`{label}`" not in rules:
+            fail(f"factory.md's safety section must name the person-only label `{label}`")
+    for phrase in ("Never add or remove", "Never merge", "--force", "word for word"):
+        if phrase not in rules:
+            fail(f"factory.md's safety section must say {phrase!r}")
+
+
 def check_entry_point() -> None:
     """AGENTS.md and README point harnesses to SKILL.md without copying it."""
     p = ROOT / "AGENTS.md"
@@ -281,8 +312,12 @@ def check_triggers(fm: dict[str, str]) -> None:
         if hits:
             fail(f"trigger phrase {hits} matches the near-miss prompt {prompt!r}")
     for prompt in should:
-        if "architech" not in prompt.lower():
-            fail(f"should_trigger prompt does not name Architech: {prompt!r}")
+        if not re.search(r"architech|software factory", prompt, re.I):
+            fail(f"should_trigger prompt names neither Architech nor the Software Factory: {prompt!r}")
+    if len([p for p in should if re.search(r"factory", p, re.I)]) < 3:
+        fail("evals/triggers.json needs at least 3 should_trigger Software Factory prompts")
+    if len([p for p in near if re.search(r"factory", p, re.I)]) < 3:
+        fail("evals/triggers.json needs at least 3 near misses about other factories")
     generic = [p for p in should if re.search(r"harness|delegat|sub-agent|my bot|my agent", p, re.I)]
     if len(generic) < 3:
         fail("evals/triggers.json needs at least 3 should_trigger prompts phrased by a generic harness user")
@@ -294,6 +329,8 @@ def main() -> int:
     if fm:
         check_host_neutral(fm)
     check_operate_safety()
+    if fm:
+        check_factory(fm)
     check_entry_point()
     check_links()
     if fm and (ROOT / ".claude-plugin/plugin.json").is_file():

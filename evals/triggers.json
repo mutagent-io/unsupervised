@@ -16,7 +16,12 @@
     "Delegate this refactor to Architech from my harness and report back when the PR is open.",
     "My agent harness can run shell commands; use it to start, set up and operate Architech.",
     "Use Architech as a sub-agent for this bug and relay its questions to me.",
-    "Get Architech installed so my bot can hand it coding tasks."
+    "Get Architech installed so my bot can hand it coding tasks.",
+    "Set up the software factory here, local mode.",
+    "Should my Architech factory run locally or on Mutagent Cloud?",
+    "The software factory posted a plan on issue 12. What do I do next?",
+    "Why didn't the software factory pick up the issue I put on the board?",
+    "Push our Architech factory.yaml to the cloud and turn the factory on."
   ],
   "should_not_trigger": [
     "Explain unsupervised learning.",
@@ -34,6 +39,11 @@
     "Delegate this task to a sub-agent.",
     "Set up my agent harness with a new MCP server.",
     "Install the mutagent CLI and log in.",
-    "Run my coding agent headless in a cron job."
+    "Run my coding agent headless in a cron job.",
+    "Implement the abstract factory pattern in TypeScript.",
+    "Write a factory function that builds test fixtures for my models.",
+    "Register my agent's spec in the Mutagent Agent Factory.",
+    "Plan the shift schedule for our car factory.",
+    "Create a GitHub Project board for our next sprint."
   ]
 }

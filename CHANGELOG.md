@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.2.0] - unreleased
+
+### Added
+- Software Factory: `references/factory.md` covers choosing local or Cloud mode
+  (the user's own session vs Mutagent Cloud's sandboxes), linking a GitHub
+  Project board and repositories during onboarding, what `factory.yaml` holds
+  (board, repositories, label roles, merge preset, autonomy), running work
+  locally (`/sync`, `/spec` -> `/publish` -> `/dispatch`, `/execute`) and on
+  Cloud (`architech factory` push, enable, runs), following runs, relaying
+  gates and escalations, common failures, and the safety rules: the agent
+  never adds or removes a person's label, never approves a gate, never merges.
+  Its CLI is `architech factory`, not `mutagent factory` (the Agent Factory).
+  SKILL.md points to it, and the description and trigger cases cover it.
+
 ## [0.1.0] - unreleased
 
 ### Added
