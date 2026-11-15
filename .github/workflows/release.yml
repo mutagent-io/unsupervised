@@ -2,8 +2,14 @@ name: Release
 
 # One job tags AND publishes. A tag pushed with GITHUB_TOKEN does not start other
 # workflows, so a separate "on: push: tags" release workflow would never run.
+#
+# Gated on Validate: a push to main releases only after the Validate run for that
+# push has passed, and the job checks out exactly the commit Validate checked. A
+# manual run (workflow_dispatch) needs a passing Validate run on the tag's commit.
 on:
-  push:
+  workflow_run:
+    workflows: [Validate]
+    types: [completed]
     branches: [main]
   workflow_dispatch:
     inputs:
@@ -21,13 +27,32 @@ concurrency:
 jobs:
   release:
     name: Tag and publish a version that has no release yet
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push')
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      actions: read   # look up Validate runs for a manual release
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.tag }}   # empty on push: the pushed commit
+          # the tag on a manual run; else the commit the passing Validate run checked
+          ref: ${{ inputs.tag || github.event.workflow_run.head_sha }}
+
+      - name: Validate passed on this commit (manual run)
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          sha="$(git rev-parse HEAD)"
+          passed="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/validate.yml/runs?head_sha=$sha&status=success" --jq '.total_count')"
+          if [ "$passed" -lt 1 ]; then
+            echo "::error::no passing Validate run on $sha; run Validate on it first" >&2
+            exit 1
+          fi
 
       - name: Decide what to release
         id: plan
