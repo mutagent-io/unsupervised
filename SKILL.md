@@ -2,19 +2,20 @@
 name: unsupervised
 description: >-
   Architech, Mutagent's software-engineering harness: install it, onboard a
-  repository and run it, so a team of agents plans, builds, reviews and ships
-  code changes while you approve the plan and the merge. Works from any agent
-  harness that can read files and run shell commands, with or without
-  delegation. Use when someone wants to try or set up Architech, asks how to
-  install or onboard it, which lifecycle command fits (/spec,
-  /publish, /dispatch, /execute, /review, /ship, /monitor), how Full-Loop and
-  Fast Mode differ, or wants their agent to hand a task to Architech and read
-  the result back, headless or in a background session that can ask
-  questions. Triggers: "architech", "install architech", "set up architech",
-  "onboard architech", "run architech", "dispatch to architech", "delegate to
-  architech", "architech -p", "let agents build this unsupervised". Not for
-  unsupervised machine learning, for building or evaluating LLM agents (that
-  is Helix), or for changing Architech itself.
+  repository and run it, so a team of agents plans, builds, reviews and
+  ships code changes while you approve the plan and the merge. Works from
+  any agent harness that can read files and run shell commands, with or
+  without delegation. Use when someone wants to try or set up Architech or
+  its Software Factory (local or cloud), asks how to install or onboard it,
+  which lifecycle command fits (/spec, /publish, /dispatch, /execute,
+  /review, /ship, /monitor), or wants their agent to hand a task to
+  Architech and read the result back, headless or in a background session
+  that can ask questions. Triggers: "architech", "install architech", "set
+  up architech", "run architech", "dispatch to architech", "delegate to
+  architech", "architech -p", "software factory", "architech factory", "let
+  agents build this unsupervised". Not for unsupervised machine learning,
+  for building or evaluating LLM agents (that is Helix), or for changing
+  Architech itself.
 license: MIT
 compatibility: >-
   Any agent harness that can read files and run shell commands; tmux is
@@ -26,7 +27,7 @@ compatibility: >-
   installer's email prompt.
 metadata:
   author: mutagent
-  skill_version: "0.1.0"
+  skill_version: "0.2.0"
   architech_checked: "0.1.49"
   homepage: "https://github.com/mutagent-io/unsupervised"
   docs: "https://docs.mutagent.io/architech/overview"
@@ -53,6 +54,7 @@ running shell commands.
 | Setup: first session, `/login`, `/model`, `/onboard` | 4 | [references/onboard.md](references/onboard.md) |
 | Operate: hand a task over and read the result | 5 | [references/dispatch.md](references/dispatch.md) |
 | Which command or flow fits | 6 | [references/workflows.md](references/workflows.md) |
+| Software Factory: local or cloud, board, labels, runs, approvals | 6 | [references/factory.md](references/factory.md) |
 | "What is...", "is it safe to..." | | [references/faq.md](references/faq.md) |
 
 Read only what the request needs. Commands and behaviour can change between
@@ -264,6 +266,16 @@ scripts).
 Pick a route: a small change with no board -> Fast Mode. A feature that
 crosses files or repositories, or a team that tracks work in GitHub ->
 Full-Loop. Details: [references/workflows.md](references/workflows.md).
+
+**Software Factory** (board issues to reviewed pull requests). Local mode:
+the user's own session runs the board work (`/onboard` with a board writes
+`factory.yaml`; then `/sync`, `/spec` -> `/publish` -> `/dispatch`, or
+`/execute`). Cloud mode: Mutagent Cloud's sandboxes pick up board items a
+person labels, after `architech factory push` and `enable`. Its shell CLI is
+`architech factory`, not `mutagent factory` (a different product). Approval,
+pickup and hold labels are a person's: never add or remove one, never approve
+a gate or answer its question yourself, never merge. Details:
+[references/factory.md](references/factory.md).
 
 ## 7. When something goes wrong
 

@@ -63,7 +63,8 @@ wrote, and it shows the proposed context before the user accepts it.
 With a board, it also shows a diff for the board setup: a `factory.yaml` file
 and one pointer line in `CLAUDE.md`. After approval it commits those two
 together and nothing else. The repository list in `factory.yaml` is the scope
-of board work, not every repository the organisation owns.
+of board work, not every repository the organisation owns. What the file
+holds, and how board work then runs: [factory.md](factory.md).
 
 If onboarding asks whether to commit these files, that is a write or commit
 question: relay it, even when the user asked you to set Architech up.

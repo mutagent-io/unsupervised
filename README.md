@@ -26,6 +26,8 @@ repository, then lets your agent hand work to it.
   Mode for your change.
 - **Lets your agent hand work to Architech**: headless, or in a background
   session that can still ask you questions. tmux is optional.
+- **Sets up the Software Factory**, locally or on Mutagent Cloud, so issues on
+  your GitHub board become reviewed pull requests. Approval labels stay yours.
 
 ## Install the skill
 
@@ -92,6 +94,7 @@ references/
   onboard.md                first session, sign-in, /onboard and what it writes
   workflows.md              Full-Loop vs Fast Mode, which command when
   dispatch.md               hand work over: headless or a background tmux session
+  factory.md                Software Factory: local or cloud, board, labels, runs, approvals
   faq.md                    questions new users ask
 assets/
   brief-template.md         the hand-over brief for a headless run
