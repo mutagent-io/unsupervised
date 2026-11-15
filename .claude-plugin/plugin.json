@@ -8,5 +8,5 @@
   "license": "MIT",
   "keywords": ["architech", "mutagent", "coding-agents", "onboarding", "headless", "agent-skills"],
   "icon": "./assets/icon.png",
-  "skills": ["."]
+  "skills": ["./"]
 }

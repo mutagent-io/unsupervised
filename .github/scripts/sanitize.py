@@ -14,8 +14,8 @@ Usage:
     ./.github/scripts/sanitize.py --check --git <repo>
 """
 # Email addresses are flagged unless they are: at a documentation domain, a
-# GitHub noreply address, a role mailbox at mutagent.io, or the project's author
-# address.
+# GitHub noreply address, a role mailbox at mutagent.io, the project's author
+# address, or GitHub's merge committer (noreply@github.com).
 
 from __future__ import annotations
 
@@ -50,8 +50,9 @@ ALLOWED_EMAIL_DOMAINS = {"example.com", "example.org", "example.net", "users.nor
 ROLE_MAILBOXES = {"noreply", "no-reply", "hello", "support", "team", "security", "contact",
                   "info", "oss", "opensource", "legal", "privacy"}
 ROLE_MAILBOX_DOMAINS = {"mutagent.io"}
-# The project's commit author address, allowed exactly (no other address at its domain).
-ALLOWED_EMAILS = {"factory@mutagent.io"}
+# Allowed exactly (no other address at their domains): the project's commit author,
+# and GitHub's own committer on web-UI merges and pull-request merge commits.
+ALLOWED_EMAILS = {"factory@mutagent.io", "noreply@github.com"}
 
 
 def personal_emails(line: str) -> list[str]:
