@@ -98,12 +98,12 @@ from the file before naming one to the user.
 | `revisePlan` | `factory:changes` | a person | After a comment with notes: plan again |
 | `approve` | `merge-ready` | a person | Approves the merge of the reviewed head; removed when new commits arrive |
 | `revise` | `merge:changes` | a person | After a comment with notes: build again |
-| `hold` | `merge:hold` | a person | Stops pickup and merge; wins over every other label |
+| `hold` | `merge:hold` | anyone | Stops pickup and merge, whoever added it; wins over every other label |
 | `loosen` | `merge:yolo` | a person | Allows a merge without `approve`; never past `hold` |
 | `pr`, `origin` | none, `origin:*` | the Factory | Added to the pull requests and issues it opens |
 
 "A person" is a GitHub user with write access. Labels added by a bot, an app
-or the Factory approve nothing. Moving a card does not approve, and a comment
+or the Factory approve nothing; only `hold` works whoever adds it. Moving a card does not approve, and a comment
 `/approve` with text after it is refused.
 
 **Which gates apply.** Plan approval: before any build at `calibrating` and
@@ -122,10 +122,12 @@ In an interactive Architech session in the repository:
   issue and one sub-issue per task, on the board) -> `/dispatch <issue>`
   (agents build in parallel; each pull request is reviewed by an agent that
   did not build it). `/dispatch` never merges.
-- Fast Mode: `/execute "<goal>"` plans, opens one issue, builds and has the
-  pull request reviewed.
-- `/status` follows dispatched work. Landing is `/ship`, the user's, in an
-  interactive session (SKILL.md, section 5).
+- Fast Mode: `/execute "<goal>"` plans, opens one issue, builds, has the pull
+  request reviewed, then merges it as the merge rules allow and starts
+  `/monitor`. In Fast Mode the merge is what the user approves.
+  `--interactive` pauses after the plan; `--dry-run` writes the plan only.
+- `/status` follows dispatched work. Landing a `/dispatch` pull request is
+  `/ship`, the user's, in an interactive session (SKILL.md, section 5).
 
 The `architech factory runs ...` commands control Cloud runs, not local work.
 
@@ -202,11 +204,15 @@ workspace.
   file gives those roles. A label added from the user's account counts as the
   user's own decision, so adding one for them forges their approval, even
   when they ask in passing. Say which label to add, where, and let them add it.
-- **Never approve or reject a gate yourself.** `runs approve` and
-  `runs approve --reject` are the user's to run.
+- **Never approve or reject a gate yourself.** `runs approve`,
+  `runs approve --reject` and `runs approve --request-changes` (in `--help`,
+  not yet in the docs) are the user's to run.
 - **Never merge.** No `gh pr merge`, no `/ship` headless, no `merge:yolo`.
   The Factory lands a change only after a person's label; `/ship` is the
   user's, in an interactive session.
+- **`/execute` can merge.** It ends by merging as the merge rules allow.
+  Never start it for the user without telling them that first; relay its
+  merge question word for word like any other; never run it headless.
 - **Pull requests only.** Work reaches the default branch through a pull
   request; never push to it.
 - **`--force` needs a yes first.** Cancel, delete, disconnect and unbind stop

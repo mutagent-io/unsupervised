@@ -12,7 +12,8 @@ mode fits: see section 1 of [SKILL.md](../SKILL.md).
 3. Will it need decisions along the way? **Background session** (section 3).
    Fully briefed? **Headless** (section 2).
 4. Needs a merge? Neither mode merges for the user: they run `/ship`
-   interactively, or approve the merge in the background session.
+   interactively, or approve the merge in the background session. `/execute`
+   also ends by merging as the merge rules allow, so it never runs headless.
 5. Your harness cannot run shell commands? The user runs Architech; you write
    the brief and read the result they paste back.
 
@@ -40,7 +41,8 @@ directory your shell is in.
 It runs `architech -p` from the project directory with stdin closed and caps
 the wall clock (without `timeout`, which macOS lacks). At the cap, or when the
 script itself is stopped (TERM, INT, HUP), it stops Architech's whole process
-group and still writes a verdict. It refuses a prompt that starts with `/ship`.
+group and still writes a verdict. It refuses a prompt that starts with `/ship`
+or `/execute`: both can merge, and nobody could answer a headless merge question.
 
 ### Outlasting one shell call
 

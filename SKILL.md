@@ -97,7 +97,8 @@ What is known per host:
    section 6, run `/help` and use what it prints; never guess a command.
 6. **A finished task is not permission to merge.** The user approves the plan
    before the build and the pull request before it lands. Headless runs open
-   pull requests only; `/ship` is the user's, in an interactive session.
+   pull requests only. `/ship` and `/execute` can merge: they are the user's,
+   in an interactive session, and you tell the user that before you start one.
 7. **Report what Architech said, not what you hoped.** Quote its output and
    its last line. An exit code of 0 means the turn ended, not that the work
    is done.
@@ -148,7 +149,7 @@ questions**.
 | Can it ask questions? | **No.** It decides itself or stops | **Yes.** The question shows in the pane; you relay it |
 | Result | `verdict.txt`, `out.txt`, exit code | Read from the pane; the user can attach and watch |
 | Needs | Shell; a way to outlast one call | Shell, tmux, a way to ask the user |
-| Never for | Merging (`/ship`) | Answering a plan or merge approval for the user |
+| Never for | Merging (`/ship`, `/execute`) | Answering a plan or merge approval for the user |
 
 Pick by what your harness can do (section 1): shell and tmux and asking ->
 either mode; shell without tmux -> headless only, or the user runs the
@@ -173,7 +174,8 @@ never re-type the runner from what you read. If none of these has it, ask the
 user where the skill is.
 
 **Headless**, with the bundled runner. It closes stdin, caps the wall clock,
-grades the result, refuses `/ship`, and if it is stopped early (TERM, INT, HUP)
+grades the result, refuses `/ship` and `/execute` (both can merge), and if it
+is stopped early (TERM, INT, HUP)
 it stops Architech too and writes `INTERRUPTED`. A run usually outlasts one
 shell call, so start it detached and check for the verdict later. When you
 don't know how your harness ends a call and tmux is installed, use tmux: the
@@ -249,7 +251,7 @@ with the user.
 | `/spec` | Plan | requirements -> design -> tasks; you approve the plan |
 | `/publish` | Plan | turns the approved tasks into GitHub issues |
 | `/dispatch <issue>` | Build | sends a planned issue's tasks to agents in parallel |
-| `/execute "<goal>"` | Build | plans and acts in one pass |
+| `/execute "<goal>"` | Build | plans, builds, reviews, then merges as your merge rules allow; you approve the merge |
 | `/review <issue or PR>` | Review | code review by an agent that did not write it |
 | `/ship <PR>` | Ship | review + CI + merge + watch, under your merge rules |
 | `/monitor` | Monitor | CI/CD, deploy health, production |
@@ -270,10 +272,10 @@ Full-Loop. Details: [references/workflows.md](references/workflows.md).
 **Software Factory** (board issues to reviewed pull requests). Local mode:
 the user's own session runs the board work (`/onboard` with a board writes
 `factory.yaml`; then `/sync`, `/spec` -> `/publish` -> `/dispatch`, or
-`/execute`). Cloud mode: Mutagent Cloud's sandboxes pick up board items a
+`/execute`, which can merge). Cloud mode: Mutagent Cloud's sandboxes pick up board items a
 person labels, after `architech factory push` and `enable`. Its shell CLI is
 `architech factory`, not `mutagent factory` (a different product). Approval,
-pickup and hold labels are a person's: never add or remove one, never approve
+pickup and hold labels are the user's to set: never add or remove one, never approve
 a gate or answer its question yourself, never merge. Details:
 [references/factory.md](references/factory.md).
 

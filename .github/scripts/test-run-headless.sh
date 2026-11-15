@@ -148,6 +148,12 @@ check "refuses a /ship prompt (headless never merges)" 2 \
 printf '\n  /ship 12\n' >"$WORK/ship-brief.md"
 check "refuses a brief that starts with /ship" 2 \
   "$("$SCRIPT" --cwd "$WORK/project" --brief "$WORK/ship-brief.md" >/dev/null 2>&1; echo $?)"
+# /execute ends by merging as the merge rules allow; headless, nobody could answer.
+check "refuses an /execute prompt (it can merge)" 2 \
+  "$("$SCRIPT" --cwd "$WORK/project" --prompt '/execute --local "fix the typo"' >/dev/null 2>&1; echo $?)"
+printf '\n  /execute "fix the typo"\n' >"$WORK/execute-brief.md"
+check "refuses a brief that starts with /execute" 2 \
+  "$("$SCRIPT" --cwd "$WORK/project" --brief "$WORK/execute-brief.md" >/dev/null 2>&1; echo $?)"
 
 check "the only architech on PATH is the fake" "$WORK/bin/architech" "$(command -v architech)"
 

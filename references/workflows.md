@@ -23,7 +23,11 @@ tracks work on a GitHub board.
 
 ## 3. Fast Mode: /execute -> /review -> /ship
 
-For a contained change, no board needed. `/execute` plans and acts in one pass.
+For a contained change, no board needed. `/execute` plans and builds in one
+pass, has the pull request reviewed, then merges it as the merge rules allow
+and starts `/monitor`. In Fast Mode the merge is what the user approves:
+say so before you start it, and relay its merge question. `--interactive`
+pauses after the plan; `--dry-run` writes the plan only.
 
 ```text
 /execute "Fix the off-by-one in pagination and add a test"
@@ -31,7 +35,8 @@ For a contained change, no board needed. `/execute` plans and acts in one pass.
 /execute "Add a health-check endpoint that returns the build version"
 ```
 
-Then `/review` the result and `/ship` it when the user is happy.
+`/review` asks for another review; `/ship` lands a pull request `/execute` has
+not merged.
 
 ## 4. After shipping
 
