@@ -43,6 +43,11 @@ repo "$WORK/r5" "$(printf '%s@%s' factory2 mutagent.io)" "first"
 check "--git flags any other address at that domain" flagged "$(scan --git "$WORK/r5")"
 repo "$WORK/r6" "$(printf '%s@%s' team internal-corp.io)" "first"
 check "--git flags a role-style author at a private domain" flagged "$(scan --git "$WORK/r6")"
+# GitHub's own committer on web-UI merges and on a pull request's merge commit.
+repo "$WORK/r7" "$(printf '%s@%s' noreply github.com)" "Merge pull request #1"
+check "--git passes GitHub's merge committer" clean "$(scan --git "$WORK/r7")"
+repo "$WORK/r8" "$(printf '%s@%s' jane github.com)" "first"
+check "--git flags any other address at github.com" flagged "$(scan --git "$WORK/r8")"
 repo "$WORK/r3" 1+someone@users.noreply.github.com "token ghp_$(printf 'a%.0s' $(seq 30))"
 check "--git flags a token in a commit message" flagged "$(scan --git "$WORK/r3")"
 
