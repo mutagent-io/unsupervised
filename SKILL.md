@@ -4,17 +4,17 @@ description: >-
   Architech, Mutagent's software-engineering harness: install it, onboard a
   repository and run it, so a team of agents plans, builds, reviews and
   ships code changes while you approve the plan and the merge. Works from
-  any agent harness that can read files and run shell commands, with or
-  without delegation. Use when someone wants to try or set up Architech or
-  its Software Factory (local or cloud), asks how to install or onboard it,
-  which lifecycle command fits (/spec, /publish, /dispatch, /execute,
-  /review, /ship, /monitor), or wants their agent to hand a task to
-  Architech and read the result back, headless or in a background session
-  that can ask questions. Triggers: "architech", "install architech", "set
-  up architech", "run architech", "dispatch to architech", "delegate to
-  architech", "architech -p", "software factory", "architech factory", "let
-  agents build this unsupervised". Not for unsupervised machine learning,
-  for building or evaluating LLM agents (that is Helix), or for changing
+  any agent harness that can read files and run shell commands. Use when
+  someone wants to try or set up Architech or its Software Factory (local or
+  cloud), asks how to install or onboard it, which lifecycle command fits
+  (/spec, /publish, /dispatch, /execute, /review, /ship, /monitor), or wants
+  their agent to hand a task to Architech and read the result back, headless
+  or in a background session that can ask questions. Triggers: "architech",
+  "install architech", "set up architech", "run architech", "dispatch to
+  architech", "delegate to architech", "architech -p", "software factory",
+  "architech factory", "let agents build this unsupervised". Not for
+  unsupervised machine learning, for building or evaluating LLM agents
+  (Helix), for the Agent Factory (mutagent factory), or for changing
   Architech itself.
 license: MIT
 compatibility: >-
