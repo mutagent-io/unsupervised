@@ -86,7 +86,7 @@ their file: ask before you edit it.
 | Forget the saved email and enter a new one | `bash architech-install.sh --reset` |
 
 `update --check` prints the installed version and whether it is current, for
-example `architech 0.1.46 is up to date`.
+example `architech 0.1.49 is up to date`.
 
 ## 7. When the install goes wrong
 

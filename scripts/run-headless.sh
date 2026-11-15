@@ -24,9 +24,9 @@ while [ $# -gt 0 ]; do
     *) echo "unknown argument: $1" >&2; exit 2 ;;
   esac
 done
-[ -n "$CWD" ] && [ -d "$CWD" ] || { echo "--cwd must be an existing directory" >&2; exit 2; }
+if [ -z "$CWD" ] || [ ! -d "$CWD" ]; then echo "--cwd must be an existing directory" >&2; exit 2; fi
 case "$CAP" in ''|*[!0-9]*) echo "--timeout takes whole seconds" >&2; exit 2 ;; esac
-[ "$CAP" -ge 1 ] || { echo "--timeout must be at least 1 second" >&2; exit 2; }
+if [ "$CAP" -lt 1 ]; then echo "--timeout must be at least 1 second" >&2; exit 2; fi
 if [ -n "$BRIEF" ]; then
   [ -f "$BRIEF" ] || { echo "brief not found: $BRIEF" >&2; exit 2; }
   PROMPT="$(cat "$BRIEF")"
@@ -80,12 +80,16 @@ if [ -z "$RC" ]; then set +e; wait "$PID"; RC=$?; set -e; fi
 trap - HUP INT TERM
 
 LAST="$(grep -v '^[[:space:]]*$' "$RUN/out.txt" 2>/dev/null | tail -n 1 || true)"
-case "$RC|$LAST" in
-  "124|"*) V=TIMEOUT ;;
-  "0|VERDICT: DONE"*) V=DONE ;;
-  "0|VERDICT: BLOCKED"*) V=BLOCKED ;;
-  *"|VERDICT: FAILED"*) V=FAILED ;;
-  "0|"*) V=NO_VERDICT ;;   # the turn ended without the brief's last line: read out.txt
-  *) V=FAILED ;;           # non-zero exit: read err.txt first
-esac
+if [ "$RC" -gt 128 ] && [ "$RC" -lt 160 ]; then
+  V=INTERRUPTED            # Architech died by a signal: stopped from outside, not a failure
+else
+  case "$RC|$LAST" in
+    "124|"*) V=TIMEOUT ;;
+    "0|VERDICT: DONE"*) V=DONE ;;
+    "0|VERDICT: BLOCKED"*) V=BLOCKED ;;
+    *"|VERDICT: FAILED"*) V=FAILED ;;
+    "0|"*) V=NO_VERDICT ;;   # the turn ended without the brief's last line: read out.txt
+    *) V=FAILED ;;           # non-zero exit: read err.txt first
+  esac
+fi
 finish "$RC" "$V"

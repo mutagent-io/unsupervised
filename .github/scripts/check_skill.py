@@ -168,6 +168,14 @@ def check_operate_safety() -> None:
     skill = (ROOT / "SKILL.md").read_text(encoding="utf-8") if (ROOT / "SKILL.md").is_file() else ""
     if not re.search(r"`<skill-dir>`.*folder", skill):
         fail("SKILL.md must say what <skill-dir> is (the folder holding SKILL.md)")
+    for where in ("./.claude/skills/unsupervised", "./.agents/skills/unsupervised",
+                  "~/.claude/skills/unsupervised", "~/.agents/skills/unsupervised"):
+        if where not in skill:
+            fail(f"SKILL.md must list {where} among the places to find <skill-dir>")
+    if "Never search the whole home folder" not in skill or "never re-type the runner" not in skill:
+        fail("SKILL.md must forbid searching the whole home folder and re-typing the runner")
+    if not re.search(r"plan, merge, write or commit, or destructive", skill) or "land or merge" not in skill:
+        fail("SKILL.md must relay plan, merge, write or commit, and destructive questions, and treat a landing route as a merge question")
     dispatch = (ROOT / "references/dispatch.md").read_text(encoding="utf-8")
     if "pgid.txt" not in dispatch or not re.search(r"[Nn]o `verdict\.txt`", dispatch):
         fail("dispatch.md must cover the hard-kill outcome: no verdict.txt, stop the group named in pgid.txt")

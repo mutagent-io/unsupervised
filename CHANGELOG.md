@@ -15,13 +15,20 @@
 - Background and detached runs start a private tmux server with `-f /dev/null`,
   so none of the user's tmux config (session restore or autosave plugins) runs
   in it. The runner is always called by its absolute path in the skill folder.
+- A run stopped from outside (its process group got a signal) is graded
+  `INTERRUPTED`, not `FAILED`; dispatch.md shows how to stop a run that is
+  still going by its recorded group.
+- Where to find the skill's folder when a harness shows it only by name or URI,
+  without searching the home folder or re-typing the runner.
+- Write or commit questions, and a choice of how to land a change, are relayed
+  to the user like plan and merge questions.
 - `run-headless.sh` writes `pgid.txt`, so a run whose runner was killed outright
   (no verdict, runner gone) can be stopped exactly; the docs cover that outcome.
 - `run-headless.sh` stops Architech and writes `INTERRUPTED` when it is itself
   stopped, refuses a `/ship` prompt, and is meant to run in the background.
 - Background sessions run on their own tmux server (`-L unsupervised`) with
   exact targets.
-- Checked against Architech 0.1.46 on macOS: headless runs cannot ask and end
+- Checked against Architech 0.1.49 on macOS: headless runs cannot ask and end
   `BLOCKED` when they need a decision; a background tmux session shows a
   question as a menu that the calling agent can answer. Linux and the Codex
   sandbox are expected to work, not yet tested.

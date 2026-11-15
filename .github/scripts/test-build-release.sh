@@ -28,7 +28,11 @@ if [ -f "$ASSET" ]; then
     check "ships $f" yes "$([ -f "$WORK/x/unsupervised/$f" ] && echo yes || echo no)"
   done
   check "the runner stays executable" yes "$([ -x "$WORK/x/unsupervised/scripts/run-headless.sh" ] && echo yes || echo no)"
-  check "no CI or eval files in the skill tarball" "" "$(cd "$WORK/x/unsupervised" && ls -d .github evals .git 2>/dev/null || true)"
+  extras=""
+  for d in .github evals .git; do
+    if [ -e "$WORK/x/unsupervised/$d" ]; then extras="$extras $d"; fi
+  done
+  check "no CI or eval files in the skill tarball" "" "$extras"
 fi
 
 NOTES="$WORK/dist/release-notes.md"

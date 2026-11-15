@@ -151,6 +151,23 @@ check "refuses a brief that starts with /ship" 2 \
 
 check "the only architech on PATH is the fake" "$WORK/bin/architech" "$(command -v architech)"
 
+# Stopping a run that is still going, as dispatch.md documents: TERM to the group
+# named in pgid.txt while the runner is alive. The runner sees Architech die by a
+# signal and must grade it INTERRUPTED, not FAILED.
+pidfile="$WORK/grandchild-pgid.pid"
+FAKE_MODE=hang FAKE_PIDFILE="$pidfile" "$SCRIPT" --cwd "$WORK/project" --prompt x \
+  --timeout 600 --run "$WORK/run-pgid" >/dev/null 2>&1 &
+runner=$!
+for _ in $(seq 50); do [ -s "$pidfile" ] && [ -s "$WORK/run-pgid/pgid.txt" ] && break; sleep 0.2; done
+kill -TERM -- -"$(cat "$WORK/run-pgid/pgid.txt" 2>/dev/null || echo 999999)" 2>/dev/null || true
+wait "$runner" 2>/dev/null || true
+check "TERM to the recorded group: verdict INTERRUPTED" INTERRUPTED "$(cat "$WORK/run-pgid/verdict.txt" 2>/dev/null)"
+check "TERM to the recorded group: rc.txt 143" 143 "$(cat "$WORK/run-pgid/rc.txt" 2>/dev/null)"
+for which in "$pidfile" "$pidfile.fake"; do
+  check "TERM to the recorded group: $(basename "$which") gone" gone \
+    "$(kill -0 "$(cat "$which" 2>/dev/null || echo 999999)" 2>/dev/null && echo alive || echo gone)"
+done
+
 # A hard kill (SIGKILL) of the runner cannot be trapped: no verdict, and Architech's
 # group keeps running. pgid.txt names that group so the caller can stop exactly it.
 pidfile="$WORK/grandchild-kill.pid"

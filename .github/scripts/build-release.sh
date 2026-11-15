@@ -15,7 +15,10 @@ while [ $# -gt 0 ]; do
     *) echo "unknown argument: $1" >&2; exit 2 ;;
   esac
 done
-[ -n "$TAG" ] && [ -n "$OUT" ] || { echo "usage: build-release.sh --tag v<version> --out <dir>" >&2; exit 2; }
+if [ -z "$TAG" ] || [ -z "$OUT" ]; then
+  echo "usage: build-release.sh --tag v<version> --out <dir>" >&2
+  exit 2
+fi
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 VERSION="$(sed -n 's/^  skill_version: "\(.*\)"$/\1/p' "$ROOT/SKILL.md")"
 if [ "$TAG" != "v$VERSION" ]; then

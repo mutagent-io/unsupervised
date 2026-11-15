@@ -25,7 +25,7 @@ compatibility: >-
 metadata:
   author: mutagent
   skill_version: "0.1.0"
-  architech_checked: "0.1.46"
+  architech_checked: "0.1.49"
   homepage: "https://github.com/mutagent-io/unsupervised"
   docs: "https://docs.mutagent.io/architech/overview"
 ---
@@ -75,7 +75,7 @@ What is known per host:
 | Host | Notes |
 |---|---|
 | **Claude Code** | Loads this skill natively (plugin, or a folder in `~/.claude/skills`). A shell call stops after 2 minutes by default, 10 at most; it can run a command in the background and come back to it. |
-| **Codex** | Loads this skill from `~/.agents/skills` or a repository's `.agents/skills`. Its sandbox will likely need network access and Architech's own writes outside the workspace: expected, not yet tested. |
+| **Codex** | Loads this skill from `~/.agents/skills` or a repository's `.agents/skills`. Checked with codex-cli 0.159.0 in its default sandbox: every `tmux -L unsupervised` call (its socket lives outside the workspace), `architech update --check` (it writes outside the workspace) and `pgrep` stop for your approval, about 25 for a setup and one run; reads in the workspace and the headless run itself need none. Expect them and approve each one. Codex offers to stop asking for `tmux -L unsupervised` commands, but that saves a lasting rule: choose it only if you want it permanently. |
 | **Other harnesses** (for example GrokBot) | Point it at [AGENTS.md](AGENTS.md) or this file. Before the first run, find out from its docs or a quick test: does a shell call have a time limit, does a process started with `nohup ... &` survive the call, is tmux installed, and can it ask you a question mid-task? Section 5 picks the mode from the answers. |
 
 ## 2. Ground rules (every phase)
@@ -153,7 +153,20 @@ what they paste back.
 
 `<skill-dir>` below is the folder that holds this SKILL.md. The runner lives
 in its `scripts/` folder, not in the project, so always call it by its absolute
-path; the commands then work from any directory.
+path; the commands then work from any directory. If your harness showed the
+skill's folder when it loaded it, that is `<skill-dir>`. If it shows the skill
+only by name or URI, try these in order and use the first where
+`<skill-dir>/scripts/run-headless.sh` exists:
+
+1. `./.claude/skills/unsupervised` and `./.agents/skills/unsupervised` (in the
+   project)
+2. `~/.claude/skills/unsupervised` and `~/.agents/skills/unsupervised`
+3. `~/.claude/plugins/marketplaces/unsupervised` (where a plugin install puts
+   this repository)
+
+Never search the whole home folder, never run a copy from another project, and
+never re-type the runner from what you read. If none of these has it, ask the
+user where the skill is.
 
 **Headless**, with the bundled runner. It closes stdin, caps the wall clock,
 grades the result, refuses `/ship`, and if it is stopped early (TERM, INT, HUP)
@@ -204,16 +217,19 @@ exact target (`'=name'`, plus `:` for pane commands): a bare
 `tmux kill-server`. If `/exit` gets no answer, stop the pane's process group,
 not just the tmux session: [references/dispatch.md](references/dispatch.md).
 
-**Relaying questions:** every plan, merge or destructive question goes to the
-user word for word, with its options; type their answer. Answer a clarifying
-question yourself only when the brief already holds the answer, and say so.
+**Relaying questions:** every plan, merge, write or commit, or destructive
+question goes to the user word for word, with its options; type their answer.
+A choice between ways to land or merge a change is a merge question. An
+earlier request ("ship it", "set it up") is not an answer to the question
+Architech asks now: relay it. Answer a clarifying question yourself only when
+the brief already holds the answer, and say so.
 While the user is in `/login` in the pane, don't read the pane: wait until they
 say they're done.
 
 **Delegation:** if your harness delegates to sub-agents, give each run its own
 brief, run directory and session name. A sub-agent that cannot reach the user
 runs headless only, or passes each question back to you word for word; it
-never answers a plan, merge or destructive question itself. The merge stays
+never answers a plan, merge, write or commit, or destructive question itself. The merge stays
 with the user.
 
 ## 6. Commands

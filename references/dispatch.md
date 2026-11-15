@@ -22,7 +22,7 @@ mode fits: see section 1 of [SKILL.md](../SKILL.md).
 
 A headless run has nobody to ask, so its ask-the-user tool is not offered at
 all. The run decides by itself or stops and says why, and it still exits 0.
-Checked on 0.1.46: a headless run that was told to ask a question had no way to,
+Checked on 0.1.49: a headless run that was told to ask a question had no way to,
 and ended `BLOCKED`. So the brief carries every answer up front and says
 "open a pull request, do not merge".
 
@@ -62,7 +62,7 @@ straight to option 3: it is the one that doesn't depend on the call.
 
 3. **A detached tmux session**, if tmux is installed: the tmux server keeps
    the runner alive whatever happens to the call, and the session closes by
-   itself when the runner is done (checked on 0.1.46). `-f /dev/null` keeps the
+   itself when the runner is done (checked on 0.1.49). `-f /dev/null` keeps the
    user's tmux config out of this private server: plugins in it can restore
    their saved sessions into it, or save over them.
 
@@ -95,14 +95,28 @@ Each time you check, one of three things is true:
 `pgid.txt` names Architech's process group for this run only, so the command
 above never touches another run or the user's own sessions.
 
+### Stopping a run that is still going
+
+To stop a run on purpose (the user changed their mind, the brief was wrong),
+use the same recorded group:
+
+```bash
+kill -TERM -- -"$(cat /abs/run/pgid.txt)"
+```
+
+The runner sees Architech stop, writes `verdict=INTERRUPTED` (rc 143) and
+exits; if the run was in a tmux session, that session closes by itself. Check
+that `verdict.txt` says `INTERRUPTED` before you report it stopped. Never stop
+a run by name with `pkill architech`: that also hits the user's own sessions.
+
 The run directory holds:
 
 | File | Holds |
 |---|---|
 | `out.txt` | Architech's answer |
 | `err.txt` | Errors (sign-in, provider, network) |
-| `rc.txt` | Exit code (124 = stopped at the cap; 128+n = the script got signal n) |
-| `pgid.txt` | Architech's process group, for stopping it after a hard kill |
+| `rc.txt` | Exit code (124 = stopped at the cap; 128+n = stopped by signal n) |
+| `pgid.txt` | Architech's process group, for stopping this run and only this run |
 | `verdict.txt` | `DONE`, `BLOCKED`, `FAILED`, `NO_VERDICT`, `TIMEOUT` or `INTERRUPTED` |
 
 It prints one line, `run=<dir> rc=<code> verdict=<verdict>`, and exits 0 once a
@@ -119,7 +133,7 @@ plus your own wall-clock cap.
 ### Non-negotiables
 
 1. **Close stdin.** Print mode waits on an open stdin; an agent's shell keeps
-   it open, so the run never returns. Checked on 0.1.46: with stdin open, a run
+   it open, so the run never returns. Checked on 0.1.49: with stdin open, a run
    that answers in seconds was still waiting after 15 s.
 2. **Always `-p`.** A bare `architech` opens the interactive screen and never
    returns.
@@ -137,7 +151,7 @@ plus your own wall-clock cap.
 | `NO_VERDICT` | The turn ended without the brief's last line | Read `out.txt`; usually a missing answer or an unclear brief |
 | `FAILED` | It said it failed, or exited non-zero | Read `err.txt` first: sign-in, provider, network |
 | `TIMEOUT` | Stopped at the cap; nothing left running | Narrow the task or raise `--timeout` |
-| `INTERRUPTED` | The script was stopped (a shell call ending, Ctrl-C); Architech was stopped too | Start it detached, as above |
+| `INTERRUPTED` | Stopped by a signal: the runner (a shell call ending, Ctrl-C) or Architech's group (`kill -TERM -- -<pgid>`); nothing left running | If you didn't stop it on purpose, start it detached, as above |
 
 ### Long runs and fan-out
 
@@ -154,7 +168,7 @@ plus your own wall-clock cap.
 ### What happens to questions
 
 Yes, it can ask. The background session is the normal interactive one, so a
-question appears in the pane as a menu with numbered options. Checked on 0.1.46
+question appears in the pane as a menu with numbered options. Checked on 0.1.49
 with tmux 3.6a: the question showed in the pane, `Down` then `Enter` picked the
 second option, and the session carried on with that answer.
 
@@ -184,7 +198,7 @@ Two rules for every tmux command:
 
 If the session does not respond to `/exit`, stop Architech itself, not just
 the tmux session. `kill-session` alone can leave Architech running with no
-screen: checked on 0.1.46, it survived the session's hangup. Stop the pane's
+screen: checked on 0.1.49, it survived the session's hangup. Stop the pane's
 process group instead; the pane, and the session, then close on their own:
 
 ```bash
@@ -202,13 +216,13 @@ on that server, including other tasks'.
 
 | Question | Who answers |
 |---|---|
-| Plan approval, merge, anything destructive | **The user.** Relay it word for word with the options; type their answer |
+| Plan approval, merge (including a choice of how to land or merge), writing or committing files, anything destructive | **The user.** Relay it word for word with the options; type their answer, even if they asked for the outcome earlier |
 | A clarifying question the brief already answers | You. Then tell the user what you answered |
 | Unsure which kind it is | Relay it |
 
 A delegated sub-agent that cannot reach the user runs headless only, or passes
-each question back to you word for word; it never answers a plan, merge or
-destructive question itself. While the user is in `/login` in the pane, don't
+each question back to you word for word; it never answers a plan, merge,
+write or commit, or destructive question itself. While the user is in `/login` in the pane, don't
 read the pane; wait until they say they're done.
 
 ### Reading the pane
