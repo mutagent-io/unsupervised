@@ -225,9 +225,28 @@ def check_factory(fm: dict[str, str]) -> None:
     for label in PERSON_LABELS:
         if f"`{label}`" not in rules:
             fail(f"factory.md's safety section must name the person-only label `{label}`")
-    for phrase in ("Never add or remove", "Never merge", "--force", "word for word"):
+    for phrase in ("Never add or remove", "Never merge", "--force", "word for word", "`/execute`",
+                   "--request-changes"):
         if phrase not in rules:
             fail(f"factory.md's safety section must say {phrase!r}")
+
+
+def check_execute_merges() -> None:
+    """/execute ends by merging as the merge rules allow (docs: lifecycle-commands).
+    Every paragraph or row that says what it does must say so; the runner refuses it."""
+    for rel in ("SKILL.md", "README.md", "references/workflows.md", "references/factory.md"):
+        p = ROOT / rel
+        if not p.is_file():
+            continue
+        for block in re.split(r"\n\s*\n", p.read_text(encoding="utf-8")):
+            # one unit per paragraph, list item, numbered item or table row
+            for unit in re.split(r"\n(?=\s*(?:[-*] |\d+\. |\|))", block):
+                flat = " ".join(unit.split())
+                if re.search(r"`/execute[^`]*`[^.]*\b(plans|builds)\b", flat) and "merge" not in flat:
+                    fail(f"{rel}: says what /execute does without saying it merges: {flat[:80]!r}")
+    dispatch = " ".join((ROOT / "references/dispatch.md").read_text(encoding="utf-8").split())
+    if "`/execute`" not in dispatch:
+        fail("dispatch.md must say the runner refuses /execute")
 
 
 def check_entry_point() -> None:
@@ -366,6 +385,7 @@ def main() -> int:
         check_factory(fm)
     check_entry_point()
     check_readme_install()
+    check_execute_merges()
     check_release_gate()
     check_links()
     if fm and (ROOT / ".claude-plugin/plugin.json").is_file():

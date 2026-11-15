@@ -10,7 +10,8 @@
 # Stdin is closed for the child. At the cap, or when this script is stopped (TERM, INT,
 # HUP), the child's whole process group is stopped, so nothing keeps running unwatched.
 # Exits 0 once a verdict is written (read the verdict), 128+signal when interrupted,
-# 2 on bad arguments. Refuses a /ship prompt: a headless run never merges.
+# 2 on bad arguments. Refuses a /ship or /execute prompt: both can merge, and a
+# headless run never merges.
 set -euo pipefail
 CWD=""; BRIEF=""; PROMPT=""; CAP=900; RUN=""; PID=""
 while [ $# -gt 0 ]; do
@@ -34,6 +35,7 @@ fi
 [ -n "$PROMPT" ] || { echo "give --brief or --prompt" >&2; exit 2; }
 case "$(printf '%s\n' "$PROMPT" | awk 'NF { print $1; exit }')" in
   /ship) echo "refused: /ship merges, and a headless run never merges; run it interactively" >&2; exit 2 ;;
+  /execute) echo "refused: /execute merges as your merge rules allow, and a headless run never merges; run it interactively" >&2; exit 2 ;;
 esac
 command -v architech >/dev/null 2>&1 || { echo "architech is not on PATH" >&2; exit 2; }
 RUN="${RUN:-$(mktemp -d)}"; mkdir -p "$RUN"; RUN="$(cd "$RUN" && pwd)"

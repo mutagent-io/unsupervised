@@ -25,7 +25,7 @@ your board and taking work.
 ## What you get
 
 - **A plan before any code.** Requirements, design, tasks and an acceptance
-  spec. By default, nothing gets built until you approve it.
+  spec. In the Full-Loop, nothing gets built until you approve it.
 - **Your board as the queue.** The plan becomes a parent issue with one
   sub-issue per task, on your GitHub Project board.
 - **Agents that build the tasks in parallel** and open the pull requests.
@@ -36,7 +36,8 @@ your board and taking work.
 - **A pull request waiting for one decision: yours.**
 
 Small fix? Skip the ceremony: `/execute "fix the off-by-one in pagination"`
-plans, builds and gets the pull request reviewed in one pass.
+plans, builds, gets the pull request reviewed and merges it as your merge
+rules allow. In Fast Mode, the merge is what you approve.
 
 ## How it runs, in 60 seconds
 
@@ -56,9 +57,10 @@ waiting for you in the morning.
    local mode."
 2. **Your agent installs Architech.** It asks first and shows you the
    installer. You sign in with `/login`, then `/onboard` links your GitHub
-   Project board and writes one committed file, `factory.yaml`.
+   Project board, writes project memory and rules, and commits two files:
+   `factory.yaml` and a one-line pointer in `CLAUDE.md`.
 3. **Hand it work:** `/spec`, then `/publish` and `/dispatch`. Or `/execute`
-   for a quick fix.
+   for a quick fix, which goes on to merge.
 4. **Ready for Cloud?** Your agent walks you through `architech factory push`
    and `enable`. Then the board runs itself, up to your approvals.
 

@@ -13,8 +13,10 @@ account.
 
 ## Safety
 
-**Will it merge without me?** No. You approve the plan before the build and the
-merge before it lands. A finished task is not permission to merge.
+**Will it merge without me?** No. In the Full-Loop you approve the plan before
+the build, and in every mode you approve the merge before it lands: `/execute`
+ends by merging as your merge rules allow, so starting it is your call. A
+finished task is not permission to merge.
 
 **Does it scan my code without asking?** No. Onboarding asks before it scans
 the repository.
@@ -28,7 +30,8 @@ pointer line in `CLAUDE.md`, shown as a diff first. See [onboard.md](onboard.md)
 in chat, never on a command line.
 
 **Does a headless run merge?** No. A headless brief says "open a pull request,
-do not merge", and this skill never runs `/ship` headless.
+do not merge", and this skill never runs `/ship` or `/execute` headless (the
+runner refuses both).
 
 ## Using it
 

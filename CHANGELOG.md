@@ -21,6 +21,15 @@
   locally or on Mutagent Cloud, the install lines, and what stays yours.
 
 ### Fixed
+- `/execute` is described as it works: it plans, builds, has the pull request
+  reviewed, then merges as your merge rules allow, so in Fast Mode the merge is
+  what you approve. Agents tell the user before they start it and relay its
+  merge question, and `scripts/run-headless.sh` refuses an `/execute` prompt
+  as it refuses `/ship`.
+- The label table: `merge:hold` stops work whoever adds it. `runs approve
+  --request-changes` (in `--help`, not yet in the docs) is listed with the
+  other user-only approval commands. The README says onboarding commits two
+  files.
 - `plugin.json` declares `"skills": ["./"]`, which older Claude Code releases
   accept (a bare `"."` was refused).
 - The Release workflow publishes only after Validate passed on the same
