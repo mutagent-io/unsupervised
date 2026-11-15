@@ -17,11 +17,13 @@ description: >-
   is Helix), or for changing Architech itself.
 license: MIT
 compatibility: >-
-  Any agent harness that can read files and run shell commands (for example
-  Claude Code or Codex); tmux is optional. Checked on macOS; Linux (arm64 or
-  x64) and harnesses other than the ones checked are expected to work, not yet
-  tested. Needs bash, curl, a SHA-256 tool, git and network access, and the
-  user's own terminal once for the installer's email prompt.
+  Any agent harness that can read files and run shell commands; tmux is
+  optional. Checked on macOS with Claude Code and with Codex (whose default
+  sandbox asks you to approve tmux and a few other commands). Linux: install
+  checked on Ubuntu 24.04 arm64, no model run yet; Linux x64 and other
+  harnesses expected to work, not yet tested. Needs bash, curl, a SHA-256
+  tool, git and network access, and the user's own terminal once for the
+  installer's email prompt.
 metadata:
   author: mutagent
   skill_version: "0.1.0"

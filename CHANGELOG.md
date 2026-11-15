@@ -28,7 +28,13 @@
   stopped, refuses a `/ship` prompt, and is meant to run in the background.
 - Background sessions run on their own tmux server (`-L unsupervised`) with
   exact targets.
-- Checked against Architech 0.1.49 on macOS: headless runs cannot ask and end
+- Checked against Architech 0.1.49. On macOS: headless runs cannot ask and end
   `BLOCKED` when they need a decision; a background tmux session shows a
-  question as a menu that the calling agent can answer. Linux and the Codex
-  sandbox are expected to work, not yet tested.
+  question as a menu the calling agent can answer; journeys in Claude Code and
+  in Codex ended with a headless run that pushed an unmerged branch. Codex's
+  default sandbox asks you to approve each `tmux -L unsupervised` call,
+  `architech update --check` and `pgrep`, and in one test it answered two
+  approval questions itself, which the relay rules above now forbid. On Linux:
+  a clean install, `doctor --strict` and the offline test suites passed on
+  Ubuntu 24.04 arm64, with no model run yet. Linux x64 and other harnesses are
+  expected to work, not yet tested.
