@@ -46,8 +46,13 @@ project. It asks:
 | Use a GitHub Project board, or skip it? | For a first try, recommend skipping. A board can be added later by running `/onboard` again |
 | May it scan the repository to draft context and rules? | It never scans without a yes. Scanning gives better drafts; the user can still edit them |
 
-Answer for the user only when they asked you to. Otherwise relay each question
-and their answer.
+Relay every question to the user word for word, with its options, and type
+their answer. Plan, merge, write or commit, or destructive questions are always
+the user's, and a choice of how to land or merge a change counts as a merge
+question. An earlier request ("set it up") is not an answer to the question
+asked now. Answer one yourself only when the user's earlier words already give
+that exact answer and it is none of those kinds, and say so (SKILL.md,
+section 5).
 
 ## 4. Review what it proposes
 
@@ -59,6 +64,9 @@ With a board, it also shows a diff for the board setup: a `factory.yaml` file
 and one pointer line in `CLAUDE.md`. After approval it commits those two
 together and nothing else. The repository list in `factory.yaml` is the scope
 of board work, not every repository the organisation owns.
+
+If onboarding asks whether to commit these files, that is a write or commit
+question: relay it, even when the user asked you to set Architech up.
 
 Then read the onboarding report and do the manual steps it lists.
 

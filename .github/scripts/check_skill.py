@@ -174,8 +174,18 @@ def check_operate_safety() -> None:
             fail(f"SKILL.md must list {where} among the places to find <skill-dir>")
     if "Never search the whole home folder" not in skill or "never re-type the runner" not in skill:
         fail("SKILL.md must forbid searching the whole home folder and re-typing the runner")
-    if not re.search(r"plan, merge, write or commit, or destructive", skill) or "land or merge" not in skill:
-        fail("SKILL.md must relay plan, merge, write or commit, and destructive questions, and treat a landing route as a merge question")
+    relay = re.search(r"^\*\*Relaying questions:\*\*(.*?)(?=\n\n)", skill, re.M | re.S)
+    relay = " ".join(relay.group(1).split()) if relay else ""
+    if "plan, merge, write or commit, or destructive" not in relay or "land or merge" not in relay:
+        fail("SKILL.md's Relaying questions paragraph must relay plan, merge, write or commit, and destructive questions, and treat a landing route as a merge question")
+    onboard = (ROOT / "references/onboard.md").read_text(encoding="utf-8")
+    flat = " ".join(onboard.split())
+    if ("plan, merge, write or commit, or destructive" not in flat.lower()
+            or "write or commit question" not in flat.split("## 4.", 1)[-1]):
+        fail("onboard.md must relay plan, merge, write or commit, and destructive questions, including the commit question in section 4")
+    for p in sorted((ROOT / "references").glob("*.md")):
+        if re.search(r"[Aa]nswer for the user only when they asked", " ".join(p.read_text(encoding="utf-8").split())):
+            fail(f"{p.relative_to(ROOT)} lets the agent answer for the user because they asked earlier")
     dispatch = (ROOT / "references/dispatch.md").read_text(encoding="utf-8")
     if "pgid.txt" not in dispatch or not re.search(r"[Nn]o `verdict\.txt`", dispatch):
         fail("dispatch.md must cover the hard-kill outcome: no verdict.txt, stop the group named in pgid.txt")
