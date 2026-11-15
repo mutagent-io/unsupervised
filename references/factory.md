@@ -51,8 +51,10 @@ Architech installed and signed in (SKILL.md, sections 3 and 4).
 
 1. **Onboard with a board.** In an interactive session, `/onboard` asks which
    GitHub Project board to use: its owner (organisation or user) and project
-   number, or skip. Skipping writes no `factory.yaml`; run `/onboard` again
-   later to add a board. Relay the question; the user picks the board.
+   number, or skip. Run `/onboard` again later to add a board. The docs say
+   skipping writes no `factory.yaml`; Architech 0.1.49's onboarding says it
+   always creates a local one. Go by what the live question says it will
+   write. Relay the question; the user picks the board.
 2. **Review the diff.** Onboarding shows a diff of `factory.yaml` (with
    `mode: local`, the board, repositories, label roles, issue naming and merge
    policy) and one pointer line in `CLAUDE.md`. After approval it commits those
@@ -223,7 +225,7 @@ workspace.
 
 | Symptom | Look at / do |
 |---|---|
-| No `factory.yaml` after onboarding | The board was skipped; run `/onboard` again and pick one |
+| No `factory.yaml`, or one with no board | The board was skipped; run `/onboard` again and pick one |
 | `validate` passes, Cloud setup fails | Validation is offline and checks shape only: run `architech factory status --json` |
 | Work pauses with `NO_PROVIDER_CONFIGURED` | Add a model provider to the workspace; local sign-ins don't reach Cloud |
 | Push can't link a repository | Its name in `repos`, and the GitHub App's access; push grants no permissions |
