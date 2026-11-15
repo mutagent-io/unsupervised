@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.2.0] - unreleased
+## [0.1.1] - unreleased
 
 ### Added
 - Software Factory: `references/factory.md` covers choosing local or Cloud mode
@@ -13,8 +13,21 @@
   never adds or removes a person's label, never approves a gate, never merges.
   Its CLI is `architech factory`, not `mutagent factory` (the Agent Factory).
   SKILL.md points to it, and the description and trigger cases cover it.
+- The description rules out the Agent Factory (`mutagent factory`), so a
+  request about it no longer loads this skill.
 
-## [0.1.0] - unreleased
+### Changed
+- README rewritten around the Software Factory: what you get, how it runs
+  locally or on Mutagent Cloud, the install lines, and what stays yours.
+
+### Fixed
+- `plugin.json` declares `"skills": ["./"]`, which older Claude Code releases
+  accept (a bare `"."` was refused).
+- The Release workflow publishes only after Validate passed on the same
+  commit; a manual release needs a passing Validate run on the tag's commit.
+- CI pins the Claude Code version used for `claude plugin validate`.
+
+## [0.1.0] - 2026-11-15
 
 ### Added
 - Harness-neutral: works from any agent harness that can read files and run

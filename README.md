@@ -4,30 +4,63 @@
 
 # unsupervised
 
-**Let a team of agents plan, build, review and ship your code change. You
-approve the plan and the merge.**
+**Turn your GitHub board into a software factory.**
+
+**idea → spec → board → agents build in parallel → independent review → CI →
+merged PR**
+
+You sign off on the plan and the merge. The agents do the rest.
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Agent Skills](https://img.shields.io/badge/Agent%20Skills-spec-black.svg)](https://agentskills.io/specification)
 [![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-plugin-black.svg)](https://code.claude.com/docs/en/plugins)
 [![Codex skill](https://img.shields.io/badge/Codex-skill-black.svg)](https://developers.openai.com/codex/skills)
 
-`unsupervised` is an [Agent Skill](https://agentskills.io) for any agent
-harness that can read files and run shell commands: Claude Code, Codex, or your
-own. It gets [Architech](https://docs.mutagent.io/architech/overview),
-Mutagent's software-engineering harness, installed and running in your
-repository, then lets your agent hand work to it.
+`unsupervised` is an [Agent Skill](https://agentskills.io). Install it in
+Claude Code, Codex or any agent that can run shell commands, say "set up the
+software factory here", and your agent gets
+[Architech](https://docs.mutagent.io/architech/overview) installed, linked to
+your board and taking work.
 
-## What it does
+## What you get
 
-- **Installs Architech** with the public installer, after asking you and
-  showing you the script.
-- **Walks you through sign-in and `/onboard`**, and picks Full-Loop or Fast
-  Mode for your change.
-- **Lets your agent hand work to Architech**: headless, or in a background
-  session that can still ask you questions. tmux is optional.
-- **Sets up the Software Factory**, locally or on Mutagent Cloud, so issues on
-  your GitHub board become reviewed pull requests. Approval labels stay yours.
+- **A plan before any code.** Requirements, design, tasks and an acceptance
+  spec. By default, nothing gets built until you approve it.
+- **Your board as the queue.** The plan becomes a parent issue with one
+  sub-issue per task, on your GitHub Project board.
+- **Agents that build the tasks in parallel** and open the pull requests.
+- **Review by an agent that didn't write the code.** It sends work back to
+  the builder until it passes; after two rounds, it comes to you.
+- **CI that bounces back.** On the cloud factory, failed CI on its branch
+  sends the work back to the builder, not to you.
+- **A pull request waiting for one decision: yours.**
+
+Small fix? Skip the ceremony: `/execute "fix the off-by-one in pagination"`
+plans, builds and gets the pull request reviewed in one pass.
+
+## How it runs, in 60 seconds
+
+Same pipeline, two places to run it:
+
+| | Local factory | Cloud factory |
+|---|---|---|
+| Runs in | Your own Architech session | Mutagent Cloud sandboxes |
+| Work starts when | You type `/dispatch 42` | Someone adds the pickup label to an issue |
+| You approve by | Answering the session | Adding a label on the issue or PR |
+| Best for | Trying it on one repository | A board that keeps moving with your laptop shut |
+
+On the cloud factory, label an issue before you log off and the plan is
+waiting for you in the morning.
+
+1. **Install the skill** (below) and say: "Set up the software factory here,
+   local mode."
+2. **Your agent installs Architech.** It asks first and shows you the
+   installer. You sign in with `/login`, then `/onboard` links your GitHub
+   Project board and writes one committed file, `factory.yaml`.
+3. **Hand it work:** `/spec`, then `/publish` and `/dispatch`. Or `/execute`
+   for a quick fix.
+4. **Ready for Cloud?** Your agent walks you through `architech factory push`
+   and `enable`. Then the board runs itself, up to your approvals.
 
 ## Install the skill
 
@@ -38,7 +71,8 @@ repository, then lets your agent hand work to it.
 /plugin install unsupervised@unsupervised
 ```
 
-It loads when you ask about Architech, or run it as `/unsupervised:unsupervised`.
+It loads when you ask about Architech or the software factory, or run it as
+`/unsupervised:unsupervised`.
 
 **Any agent, with the skills CLI:**
 
@@ -58,15 +92,28 @@ git clone https://github.com/mutagent-io/unsupervised ~/.claude/skills/unsupervi
 git clone https://github.com/mutagent-io/unsupervised ~/.agents/skills/unsupervised
 ```
 
-Or clone it into a repository's `.agents/skills/` to use it in that repository only.
+Or clone it into a repository's `.agents/skills/` to use it there only. Any
+other harness: clone it anywhere it can read, and see [For agents](#for-agents).
+Pinned versions: every [release](https://github.com/mutagent-io/unsupervised/releases)
+attaches `unsupervised-v<version>.tar.gz`.
 
-**Any other harness:** clone or download the repository anywhere your harness
-can read it, then point the harness at it (see [For agents](#for-agents)).
+## Then say
 
-**Pinned:** every release on the
-[releases page](https://github.com/mutagent-io/unsupervised/releases) attaches
-`unsupervised-v<version>.tar.gz`, which unpacks to an `unsupervised/` skill
-folder: copy it into `~/.claude/skills/` or `~/.agents/skills/`.
+- "Set up the software factory here, local mode."
+- "Plan this feature with Architech."
+- "Why didn't the factory pick up my issue?"
+- "Hand this bug to Architech and tell me when the PR is up."
+
+## It never merges without you
+
+- **Approvals are labels only a person can add.** The factory ignores labels
+  from bots and apps. Your agent never adds one, never approves a gate for
+  you, and never merges.
+- **Every change lands as a pull request.** The merge waits for your approval
+  at every autonomy level.
+- **It asks before it installs or writes anything**, and shows you the
+  installer before it runs.
+- **No keys in chat.** You sign in inside Architech with `/login`.
 
 ## For agents
 
@@ -74,49 +121,15 @@ Running a harness that doesn't load skills natively? Read [SKILL.md](SKILL.md)
 and follow its three phases: start (install), setup (sign in, model, onboard)
 and operate (hand work over, relay questions, read results). Its first section
 says what your harness needs and what to do without tmux or without a shell.
+For the Software Factory, read [references/factory.md](references/factory.md).
 [AGENTS.md](AGENTS.md) points harnesses that load `AGENTS.md` to the same
 place. A user can start you with: "Read github.com/mutagent-io/unsupervised and
 set up Architech in this repo."
 
-## Then say
-
-- "Set up Architech in this repo."
-- "Plan this feature with Architech."
-- "Hand this bug to Architech and tell me when the PR is up."
-
-## What is inside
-
-```text
-SKILL.md                    the skill: what a harness needs, rules, start / setup / operate
-AGENTS.md                   pointer to SKILL.md for harnesses that don't load skills
-references/
-  install.md                install, verify, update, remove, install problems
-  onboard.md                first session, sign-in, /onboard and what it writes
-  workflows.md              Full-Loop vs Fast Mode, which command when
-  dispatch.md               hand work over: headless or a background tmux session
-  factory.md                Software Factory: local or cloud, board, labels, runs, approvals
-  faq.md                    questions new users ask
-assets/
-  brief-template.md         the hand-over brief for a headless run
-  icon.png                  the Mutagent mark
-scripts/
-  run-headless.sh           one headless run: stdin closed, time capped, result graded
-agents/openai.yaml          Codex display metadata
-evals/triggers.json         prompts that should, and should not, load the skill
-.claude-plugin/             Claude Code plugin and marketplace manifests
-.github/                    checks that run on every pull request
-```
-
-## Safety
-
-- It **asks before** it installs anything or writes to your repository.
-- It **never merges for you**: you approve the plan and the merge.
-- It **never asks for keys in chat**: you sign in inside Architech with `/login`.
-- **Headless runs open pull requests only**; they never run `/ship`.
-
 ## Learn more
 
-- Architech docs: https://docs.mutagent.io/architech/overview
+- Software Factory: https://docs.mutagent.io/factory/overview
+- Architech: https://docs.mutagent.io/architech/overview
 - Agent Skills format: https://agentskills.io/specification
 
 ## Contributing and licence

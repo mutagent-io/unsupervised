@@ -17,6 +17,14 @@ ROOT = Path(__file__).resolve().parents[2]
 REFERENCES = ["install.md", "onboard.md", "workflows.md", "dispatch.md", "factory.md", "faq.md"]
 # Label roles only a person may add (docs.mutagent.io/factory/reference/factory-yaml#labels),
 # by their default names. factory.md must name each one in its safety rules.
+# The README's install lines, verbatim: a rewrite must keep them working.
+INSTALL_LINES = (
+    "/plugin marketplace add mutagent-io/unsupervised",
+    "/plugin install unsupervised@unsupervised",
+    "npx skills add mutagent-io/unsupervised",
+    "git clone https://github.com/mutagent-io/unsupervised ~/.claude/skills/unsupervised",
+    "git clone https://github.com/mutagent-io/unsupervised ~/.agents/skills/unsupervised",
+)
 PERSON_LABELS = ("factory:pickup", "factory:approved", "factory:changes", "merge-ready",
                  "merge:changes", "merge:hold", "merge:yolo")
 REQUIRED = [
@@ -239,6 +247,31 @@ def check_entry_point() -> None:
         fail("README's 'For agents' section must point to SKILL.md, not copy commands")
 
 
+def check_readme_install() -> None:
+    readme = (ROOT / "README.md").read_text(encoding="utf-8") if (ROOT / "README.md").is_file() else ""
+    for line in INSTALL_LINES:
+        if not re.search(rf"^{re.escape(line)}$", readme, re.M):
+            fail(f"README.md must keep the install line {line!r}")
+
+
+def check_release_gate() -> None:
+    """A push to main publishes only after Validate passed on that commit."""
+    p = ROOT / ".github/workflows/release.yml"
+    if not p.is_file():
+        return
+    text = p.read_text(encoding="utf-8")
+    on = re.search(r"^on:\n(.*?)(?=^\S)", text, re.M | re.S)
+    on = on.group(1) if on else ""
+    if re.search(r"^  push:", on, re.M):
+        fail("release.yml must not start on push: it starts after Validate (workflow_run)")
+    if not re.search(r"^  workflow_run:\n    workflows: \[Validate\]", on, re.M):
+        fail("release.yml must start on workflow_run of Validate")
+    if "github.event.workflow_run.conclusion == 'success'" not in text:
+        fail("release.yml must release only when that Validate run succeeded")
+    if "github.event.workflow_run.head_sha" not in text:
+        fail("release.yml must check out the commit Validate checked")
+
+
 def check_links() -> None:
     files = [ROOT / "SKILL.md", ROOT / "README.md"] + [ROOT / "references" / r for r in REFERENCES]
     for p in files:
@@ -332,6 +365,8 @@ def main() -> int:
     if fm:
         check_factory(fm)
     check_entry_point()
+    check_readme_install()
+    check_release_gate()
     check_links()
     if fm and (ROOT / ".claude-plugin/plugin.json").is_file():
         check_versions(fm)

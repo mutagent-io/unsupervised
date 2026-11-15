@@ -83,12 +83,14 @@ Bump these together, in one pull request:
 3. the plugin's `version` in `.claude-plugin/marketplace.json`
 4. a new top entry in `CHANGELOG.md`
 
-`check_skill.py` fails if they differ. On every push to `main`, the Release
-workflow checks whether `v<version>` is tagged yet; if not, it tags it and
-publishes the release with the skill tarball in the same job (a tag pushed by a
-workflow does not start other workflows). Any way of reaching `main` works:
-direct push, squash, merge commit or rebase merge. To publish or re-upload
-an existing tag, run the Release workflow by hand with that tag.
+`check_skill.py` fails if they differ. After every push to `main`, once the
+Validate run for that push has passed, the Release workflow checks out that
+same commit and checks whether `v<version>` is tagged yet; if not, it tags it
+and publishes the release with the skill tarball in the same job (a tag pushed
+by a workflow does not start other workflows). A red Validate releases nothing.
+Any way of reaching `main` works: direct push, squash, merge commit or rebase
+merge. To publish or re-upload an existing tag, run the Release workflow by
+hand with that tag; it refuses a commit with no passing Validate run.
 
 When you re-check the skill against a new Architech release, update
 `metadata.architech_checked`.
