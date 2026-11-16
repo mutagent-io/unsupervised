@@ -11,6 +11,11 @@ merged PR**
 
 You sign off on the plan and the merge. The agents do the rest.
 
+Once a repository is set up, ask your agent for a feature or a fix and it
+hands the work to Architech's factory: it writes the brief, relays the
+questions and reports back, but it doesn't write the code itself, unless you
+explicitly ask it to (and then it tells you it isn't using the factory).
+
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Agent Skills](https://img.shields.io/badge/Agent%20Skills-spec-black.svg)](https://agentskills.io/specification)
 [![Claude Code plugin](https://img.shields.io/badge/Claude%20Code-plugin-black.svg)](https://code.claude.com/docs/en/plugins)
@@ -53,16 +58,19 @@ Same pipeline, two places to run it:
 On the cloud factory, label an issue before you log off and the plan is
 waiting for you in the morning.
 
-1. **Install the skill** (below) and say: "Set up the software factory here,
-   local mode."
+1. **Install the skill** (below) and say: "Set up the software factory here."
 2. **Your agent installs Architech.** It asks first and shows you the
    installer. You sign in with `/login`, then `/onboard` links your GitHub
    Project board, writes project memory and rules, and commits two files:
-   `factory.yaml` and a one-line pointer in `CLAUDE.md`.
-3. **Hand it work:** `/spec`, then `/publish` and `/dispatch`. Or `/execute`
-   for a quick fix, which goes on to merge.
-4. **Ready for Cloud?** Your agent walks you through `architech factory push`
-   and `enable`. Then the board runs itself, up to your approvals.
+   `factory.yaml` and a one-line pointer in `CLAUDE.md`. That is your local
+   factory.
+3. **Your agent asks about the cloud.** Stay local, or move the factory to
+   Mutagent Cloud: it walks you through `architech factory push` and `enable`
+   only after you say yes. Then the board runs itself, up to your approvals.
+4. **Hand it work:** ask for the feature or the fix in plain words. Your agent
+   starts `/spec`, then `/publish` and `/dispatch`, or `/execute` for a quick
+   fix, which goes on to merge as your merge rules allow; on the cloud, it
+   puts the work on the board for you to label.
 
 ## Install the skill
 
@@ -101,7 +109,8 @@ attaches `unsupervised-v<version>.tar.gz`.
 
 ## Then say
 
-- "Set up the software factory here, local mode."
+- "Set up the software factory here."
+- "Add a CSV export to the reports page." (in a repository set up with Architech)
 - "Plan this feature with Architech."
 - "Why didn't the factory pick up my issue?"
 - "Hand this bug to Architech and tell me when the PR is up."
@@ -119,11 +128,19 @@ attaches `unsupervised-v<version>.tar.gz`.
 
 ## For agents
 
+**Delegate, never implement.** In a repository set up with Architech, a
+request to build, add, fix or change code goes to Architech or its factory:
+you write the brief, relay questions, follow the run and report, and you never
+edit the project's code yourself unless the user explicitly asks you to. Set
+the factory up locally first, and move it to Mutagent Cloud only after the
+user says yes.
+
 Running a harness that doesn't load skills natively? Read [SKILL.md](SKILL.md)
-and follow its three phases: start (install), setup (sign in, model, onboard)
-and operate (hand work over, relay questions, read results). Its first section
-says what your harness needs and what to do without tmux or without a shell.
-For the Software Factory, read [references/factory.md](references/factory.md).
+and follow its three phases: start (install), setup (sign in, model, onboard,
+the local factory, the cloud question) and operate (hand work over, relay
+questions, follow runs). Its first section says what your harness needs and
+what to do without tmux or without a shell. For the Software Factory, read
+the operator's manual, [references/factory.md](references/factory.md).
 [AGENTS.md](AGENTS.md) points harnesses that load `AGENTS.md` to the same
 place. A user can start you with: "Read github.com/mutagent-io/unsupervised and
 set up Architech in this repo."

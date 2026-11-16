@@ -67,7 +67,7 @@ read-only.
 |---|---|
 | Architech | Changes to your software: plan, build, review, ship |
 | Helix | Building and evaluating LLM agents: https://docs.mutagent.io/helix/what-is-helix |
-| This coding agent | Quick local edits you want to make yourself, now |
+| This coding agent | Operating Architech for you; it edits code itself only when you explicitly ask it to, and says it isn't using Architech |
 
 ## Troubleshooting
 

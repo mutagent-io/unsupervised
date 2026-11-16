@@ -1,6 +1,34 @@
 # Changelog
 
-## [0.1.1] - unreleased
+## [0.1.2] - unreleased
+
+### Added
+- **Delegate, never implement.** The agent operating Architech hands every
+  build, fix or feature request in a repository set up with Architech to
+  Architech or its factory, and never edits the project's code itself. It
+  writes the brief, relays questions, follows the run and reports. It changes
+  code only when the user explicitly asks it to, and then says it isn't using
+  Architech. This is the first instruction of SKILL.md's operate phase, of
+  the README's "For agents" section and of dispatch.md's decision list, and
+  workflows.md says it too. In a repository that isn't set up, the skill
+  steps aside in one line and offers onboarding instead of taking the task.
+- Local first, then the cloud question: after onboarding sets up the local
+  factory, the agent asks whether to move it to Mutagent Cloud, explains what
+  that means, and never moves it without a yes. Once the cloud factory is
+  set up, it asks per job whether to run it on the cloud or locally.
+- Trigger cases: build requests that name Architech or the factory, and plain
+  code requests outside a set-up repository as near misses.
+- `check_skill.py` guards the delegation wording, the local-first order and
+  the manual's section order.
+
+### Changed
+- `references/factory.md` is now the Software Factory operator's manual, in
+  the order you use it: set up the local factory, run work locally, move to
+  the cloud (ask first), run work on the cloud, follow runs, failures, safety.
+- The description covers build requests in a repository already set up with
+  Architech.
+
+## [0.1.1] - 2026-11-15
 
 ### Added
 - Software Factory: `references/factory.md` covers choosing local or Cloud mode

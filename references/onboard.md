@@ -89,4 +89,8 @@ Then read the onboarding report and do the manual steps it lists.
   mode, nearest file last, and reach every agent Architech dispatches.
 - To change how agents behave in this project, edit the project's context and
   rules, not the agents.
-- Next: [workflows.md](workflows.md) to pick a first piece of work.
+- With a board, this is the local factory. Next, ask the user whether to
+  move it to Mutagent Cloud, and never move it without a yes:
+  [factory.md](factory.md), section 4.
+- Next: [workflows.md](workflows.md) to pick a first piece of work, which
+  Architech builds; you hand it over, you don't write it.

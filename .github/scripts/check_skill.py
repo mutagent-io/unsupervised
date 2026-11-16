@@ -249,6 +249,66 @@ def check_execute_merges() -> None:
         fail("dispatch.md must say the runner refuses /execute")
 
 
+DELEGATE = "**Delegate, never implement.**"
+# The factory manual's sections, in order: local first, the cloud only after the user's yes.
+FACTORY_MANUAL = ("Set up the local factory", "Run work locally", "Move to the cloud",
+                  "Run work on the cloud", "Follow runs", "failures", "Safety")
+CODE_REQUEST_RE = re.compile(r"^(Add|Fix|Build|Implement|Refactor|Change|Rename)\b")
+
+
+def first_paragraph(section: str) -> str:
+    blocks = [b for b in re.split(r"\n\s*\n", section.strip()) if b.strip()]
+    return " ".join(blocks[0].split()) if blocks else ""
+
+
+def check_delegate(fm: dict[str, str]) -> None:
+    """The host agent hands build work to Architech or the factory; it never writes the
+    project's code itself unless the user explicitly asks. First in SKILL.md's operate
+    phase, in the README, in dispatch.md's decision list and in workflows.md."""
+    desc = " ".join(fm.get("description", "").split())
+    if "never write the code yourself" not in desc or "already set up" not in desc:
+        fail("description must say: in a repository already set up, delegate and never write the code yourself")
+    skill = (ROOT / "SKILL.md").read_text(encoding="utf-8")
+    operate = re.search(r"^## \d+\. Operate\b[^\n]*\n(.*?)(?=^## )", skill, re.M | re.S)
+    operate_text = " ".join(operate.group(1).split()) if operate else ""
+    if not first_paragraph(operate.group(1) if operate else "").startswith(DELEGATE):
+        fail(f"SKILL.md's operate phase must open with {DELEGATE!r}")
+    for phrase in ("never edit", "explicitly asks", "not using Architech", "steps aside"):
+        if phrase not in operate_text:
+            fail(f"SKILL.md's operate phase must say {phrase!r}")
+    setup = re.search(r"^## \d+\. Setup\b[^\n]*\n(.*?)(?=^## )", skill, re.M | re.S)
+    setup_text = " ".join(setup.group(1).split()) if setup else ""
+    if "**Local first, then ask about the cloud.**" not in setup_text or "without a yes" not in setup_text:
+        fail("SKILL.md's setup phase must set up the local factory first and move to the cloud only after a yes")
+    readme = (ROOT / "README.md").read_text(encoding="utf-8") if (ROOT / "README.md").is_file() else ""
+    agents = re.search(r"^## For agents\b[^\n]*\n(.*?)(?=^## |\Z)", readme, re.M | re.S)
+    if not first_paragraph(agents.group(1) if agents else "").startswith(DELEGATE):
+        fail(f"README's 'For agents' section must open with {DELEGATE!r}")
+    intro = " ".join(readme.split("\n## ", 1)[0].split())
+    if "doesn't write the code itself" not in intro:
+        fail("README's intro must say your agent doesn't write the code itself")
+    dispatch = (ROOT / "references/dispatch.md").read_text(encoding="utf-8")
+    decide = re.search(r"^## 1\.[^\n]*\n(.*?)(?=^## )", dispatch, re.M | re.S)
+    items = re.split(r"\n(?=\d+\. )", decide.group(1).strip()) if decide else []
+    first_item = " ".join(items[0].split()) if items else ""
+    if not first_item.startswith("1. " + DELEGATE):
+        fail(f"dispatch.md's decision list must start with {DELEGATE!r}")
+    if DELEGATE not in (ROOT / "references/workflows.md").read_text(encoding="utf-8"):
+        fail(f"workflows.md must say {DELEGATE!r}")
+    for p in [ROOT / "SKILL.md", ROOT / "README.md", *sorted((ROOT / "references").glob("*.md"))]:
+        flat = " ".join(p.read_text(encoding="utf-8").split())
+        if re.search(r"can do itself\? Do it there|Quick local edits you want", flat):
+            fail(f"{p.relative_to(ROOT)} tells the agent to make the change itself")
+    factory = (ROOT / "references/factory.md").read_text(encoding="utf-8")
+    heads = re.findall(r"^## \d+\. (.*)$", factory, re.M)
+    pos = [next((i for i, h in enumerate(heads) if want.lower() in h.lower()), -1) for want in FACTORY_MANUAL]
+    if -1 in pos or pos != sorted(pos):
+        fail(f"factory.md must be a manual with sections in this order: {', '.join(FACTORY_MANUAL)}")
+    move = re.search(r"^## \d+\. Move to the cloud[^\n]*\n(.*?)(?=^## )", factory, re.M | re.S)
+    if not move or "Never move" not in " ".join(move.group(1).split()):
+        fail("factory.md's 'Move to the cloud' section must say: never move without the user's yes")
+
+
 def check_entry_point() -> None:
     """AGENTS.md and README point harnesses to SKILL.md without copying it."""
     p = ROOT / "AGENTS.md"
@@ -373,6 +433,15 @@ def check_triggers(fm: dict[str, str]) -> None:
     generic = [p for p in should if re.search(r"harness|delegat|sub-agent|my bot|my agent", p, re.I)]
     if len(generic) < 3:
         fail("evals/triggers.json needs at least 3 should_trigger prompts phrased by a generic harness user")
+    # The eval runs in an empty folder, not an onboarded repository: a plain code request
+    # there must not load the skill. Asking for Architech or the factory to build it must.
+    plain = [p for p in near if CODE_REQUEST_RE.match(p) and not re.search(r"architech|factory", p, re.I)]
+    if len(plain) < 3:
+        fail("evals/triggers.json needs at least 3 near misses that are plain code requests outside an onboarded repository")
+    build = [p for p in should if re.search(r"\b(add|fix|build)\b", p, re.I)
+             and re.search(r"architech|software factory", p, re.I)]
+    if len(build) < 3:
+        fail("evals/triggers.json needs at least 3 should_trigger build requests that ask for Architech or the factory")
 
 
 def main() -> int:
@@ -383,6 +452,8 @@ def main() -> int:
     check_operate_safety()
     if fm:
         check_factory(fm)
+    if fm:
+        check_delegate(fm)
     check_entry_point()
     check_readme_install()
     check_execute_merges()
