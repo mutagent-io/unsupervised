@@ -6,9 +6,18 @@ mode fits: see section 1 of [SKILL.md](../SKILL.md).
 
 ## 1. Decide in ten seconds
 
-1. A repo-local edit your harness can do itself? Do it there.
-2. Needs Architech's planning, review or parallel agents, in a repository where
-   Architech is onboarded? Hand it over.
+1. **Delegate, never implement.** Every request to build, add, fix or change
+   code in a repository set up with Architech is handed over; you never edit
+   the project's files yourself, even when the change looks too small to
+   hand over. You write the brief and the run folder outside the project,
+   relay questions, follow the run and report. A cloud factory that is set up
+   gets the job if the user picks the cloud for it
+   ([factory.md](factory.md), section 5); otherwise one of the two modes
+   below. Not installed or not onboarded: set it up first (SKILL.md, sections
+   3 and 4). Only when the user explicitly asks you to do it yourself do you
+   edit the code, and you say first that you are not using Architech.
+2. Which route inside Architech: [workflows.md](workflows.md) (Full-Loop or
+   Fast Mode), or the request in plain words.
 3. Will it need decisions along the way? **Background session** (section 3).
    Fully briefed? **Headless** (section 2).
 4. Needs a merge? Neither mode merges for the user: they run `/ship`

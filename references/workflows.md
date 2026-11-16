@@ -2,6 +2,15 @@
 
 Sources: the boot screen of a session; https://docs.mutagent.io/architech/agents
 
+## 0. Who does the work
+
+**Delegate, never implement.** The commands below are what you start in an
+Architech session (or, on a cloud factory, what its runs do); the code itself
+is written by Architech's agents. You never edit the project's files
+yourself, unless the user explicitly asks you to, and then you say you are
+not using Architech. Where the work runs: a local session first; a cloud
+factory only after the user chose it ([factory.md](factory.md)).
+
 ## 1. Plain words first
 
 Describing the goal in plain language works. The session (the orchestrator)

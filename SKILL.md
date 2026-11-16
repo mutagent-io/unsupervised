@@ -1,21 +1,21 @@
 ---
 name: unsupervised
 description: >-
-  Architech, Mutagent's software-engineering harness: install it, onboard a
-  repository and run it, so a team of agents plans, builds, reviews and
-  ships code changes while you approve the plan and the merge. Works from
-  any agent harness that can read files and run shell commands. Use when
-  someone wants to try or set up Architech or its Software Factory (local or
-  cloud), asks how to install or onboard it, which lifecycle command fits
-  (/spec, /publish, /dispatch, /execute, /review, /ship, /monitor), or wants
-  their agent to hand a task to Architech and read the result back, headless
-  or in a background session that can ask questions. Triggers: "architech",
-  "install architech", "set up architech", "run architech", "dispatch to
-  architech", "delegate to architech", "architech -p", "software factory",
-  "architech factory", "let agents build this unsupervised". Not for
-  unsupervised machine learning, for building or evaluating LLM agents
-  (Helix), for the Agent Factory (mutagent factory), or for changing
-  Architech itself.
+  Architech, Mutagent's software-engineering harness, and its Software
+  Factory: install it, onboard a repository, set up the factory locally
+  (then on Mutagent Cloud if the user wants) and hand it work; agents plan,
+  build, review and ship, the user approves plan and merge. Works from any
+  agent harness that can run shell commands. Use to set up or operate
+  Architech or the factory, pick a lifecycle command (/spec, /publish,
+  /dispatch, /execute, /review, /ship, /monitor), or hand Architech a task.
+  In a repository already set up with Architech, also use for any build, fix
+  or feature request: delegate it, never write the code yourself. Triggers:
+  "architech", "install architech", "set up architech", "run architech",
+  "dispatch to architech", "delegate to architech", "architech -p",
+  "software factory", "architech factory", "let agents build this
+  unsupervised". Not for unsupervised machine learning, for building or
+  evaluating LLM agents (Helix), for the Agent Factory (mutagent factory),
+  or for changing Architech itself.
 license: MIT
 compatibility: >-
   Any agent harness that can read files and run shell commands; tmux is
@@ -27,7 +27,7 @@ compatibility: >-
   installer's email prompt.
 metadata:
   author: mutagent
-  skill_version: "0.1.1"
+  skill_version: "0.1.2"
   architech_checked: "0.1.49"
   homepage: "https://github.com/mutagent-io/unsupervised"
   docs: "https://docs.mutagent.io/architech/overview"
@@ -43,18 +43,23 @@ without someone watching each step; it never means skipping those two
 approvals.
 
 This skill is for the agent the user talks to: **your harness**, operating
-Architech for them. It works in three phases: **start** (install), **setup**
-(sign in, model, onboard) and **operate** (hand work over, relay questions,
-read results). Each phase works with nothing more than reading files and
-running shell commands.
+Architech and its Software Factory for them, locally and on Mutagent Cloud. It
+works in three phases: **start** (install), **setup** (sign in, model,
+onboard, the local factory, then the cloud question) and **operate** (hand
+work over, relay questions, follow runs, report). Each phase works with
+nothing more than reading files and running shell commands.
+
+**You delegate; Architech writes the code.** A build, fix or feature request
+in a repository set up with Architech goes to Architech or the factory, never
+into your own edits: section 5.
 
 | Phase | Section | Details |
 |---|---|---|
 | Start: install, update, remove | 3 | [references/install.md](references/install.md) |
-| Setup: first session, `/login`, `/model`, `/onboard` | 4 | [references/onboard.md](references/onboard.md) |
-| Operate: hand a task over and read the result | 5 | [references/dispatch.md](references/dispatch.md) |
+| Setup: first session, `/login`, `/model`, `/onboard`, local factory, the cloud question | 4 | [references/onboard.md](references/onboard.md) |
+| Operate: delegate a task, follow it, report | 5 | [references/dispatch.md](references/dispatch.md) |
 | Which command or flow fits | 6 | [references/workflows.md](references/workflows.md) |
-| Software Factory: local or cloud, board, labels, runs, approvals | 6 | [references/factory.md](references/factory.md) |
+| Software Factory manual: set up local, run local, move to cloud, run on cloud, runs, failures, safety | 4-6 | [references/factory.md](references/factory.md) |
 | "What is...", "is it safe to..." | | [references/faq.md](references/faq.md) |
 
 Read only what the request needs. Commands and behaviour can change between
@@ -102,6 +107,7 @@ What is known per host:
 7. **Report what Architech said, not what you hoped.** Quote its output and
    its last line. An exit code of 0 means the turn ended, not that the work
    is done.
+8. **Architech writes the project's code, not you** (section 5).
 
 ## 3. Start: install Architech
 
@@ -138,7 +144,46 @@ use it too.
 
 What onboarding asks and writes: [references/onboard.md](references/onboard.md).
 
+**Local first, then ask about the cloud.** Onboarding with a GitHub Project
+board sets up the local factory: a `factory.yaml` with `mode: local`, worked
+from the user's own session ([references/factory.md](references/factory.md),
+section 2). Once onboarding is done, ask the user whether to move the factory
+to Mutagent Cloud, and say what that means: on the cloud, board items a person
+labels run in Mutagent's sandboxes, even with this machine off, and approvals
+are labels; local keeps every run in their session on this machine. Never
+move it without a yes. "Not now" means stay local and carry on with the work;
+don't ask again unless they bring it up. A yes: factory.md, section 4. No
+board yet? Ask anyway, and say the cloud needs a GitHub Project board, added
+by running `/onboard` again; meanwhile Architech works locally without one.
+
 ## 5. Operate: hand work to Architech
+
+**Delegate, never implement.** A request to build, add, fix or change code
+goes to Architech. Your part is the brief, the relayed questions, following
+the run and the report. You never edit, create or delete the project's files
+yourself, not even a one-line fix; briefs and run folders live outside the
+project. Check, then route; the first match wins:
+
+1. **Not set up, and the user didn't ask for Architech** (`git ls-files
+   '*factory.yaml'` prints nothing and there is no `.architech` folder): the
+   skill steps aside. Say in one line that this repository isn't set up with
+   Architech, offer to onboard it, and don't take the task over.
+2. **A cloud factory** (its `factory.yaml` says `mode: cloud`): ask whether
+   this job runs on the cloud or in a local session. Cloud: factory.md,
+   sections 5 and 6.
+3. **A local factory, or Architech without a board:** start Architech in the
+   repository, in a background session or headless (below). A feature:
+   `/spec` -> `/publish` -> `/dispatch`. A contained change:
+   `/execute "<goal>"`, which merges as the merge rules allow: say so first.
+   Or type the request in plain words and let the session pick.
+4. **The user asked for Architech, but it is not installed or not
+   onboarded:** set it up first (sections 3 and 4, local first, then the
+   cloud question), then hand the work over.
+
+You change the code yourself only when the user explicitly asks you to ("do
+it yourself, without Architech"), and then you say first that you are not
+using Architech or the factory for it. "Set it up", "quickly" or a slow run
+is not that ask.
 
 Two ways to hand Architech a task. The difference is **who answers its
 questions**.
@@ -269,11 +314,12 @@ Pick a route: a small change with no board -> Fast Mode. A feature that
 crosses files or repositories, or a team that tracks work in GitHub ->
 Full-Loop. Details: [references/workflows.md](references/workflows.md).
 
-**Software Factory** (board issues to reviewed pull requests). Local mode:
+**Software Factory** (board issues to reviewed pull requests). Local first:
 the user's own session runs the board work (`/onboard` with a board writes
 `factory.yaml`; then `/sync`, `/spec` -> `/publish` -> `/dispatch`, or
-`/execute`, which can merge). Cloud mode: Mutagent Cloud's sandboxes pick up board items a
-person labels, after `architech factory push` and `enable`. Its shell CLI is
+`/execute`, which can merge). Cloud, only after the user says yes: Mutagent
+Cloud's sandboxes pick up board items a person labels, after
+`architech factory push` and `enable`. Its shell CLI is
 `architech factory`, not `mutagent factory` (a different product). Approval,
 pickup and hold labels are the user's to set: never add or remove one, never approve
 a gate or answer its question yourself, never merge. Details:

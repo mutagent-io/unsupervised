@@ -1,5 +1,5 @@
 {
-  "about": "Trigger cases for the unsupervised skill. should_trigger prompts must load it; should_not_trigger prompts are near misses that must not. check_skill.py guards the description's trigger list against the near misses; trigger_eval.py runs them in Claude Code.",
+  "about": "Trigger cases for the unsupervised skill. should_trigger prompts must load it; should_not_trigger prompts are near misses that must not. check_skill.py guards the description's trigger list against the near misses; trigger_eval.py runs them in Claude Code, in an empty folder: a plain code request there is a near miss, because the skill takes build requests only in a repository set up with Architech (the acceptance run covers that case).",
   "should_trigger": [
     "Set up Architech in this repo.",
     "How do I install Architech?",
@@ -21,7 +21,11 @@
     "Should my Architech factory run locally or on Mutagent Cloud?",
     "The software factory posted a plan on issue 12. What do I do next?",
     "Why didn't the software factory pick up the issue I put on the board?",
-    "Push our Architech factory.yaml to the cloud and turn the factory on."
+    "Push our Architech factory.yaml to the cloud and turn the factory on.",
+    "Have Architech add a CSV export to the reports page.",
+    "Use the software factory to fix the login redirect bug.",
+    "Build a settings page with Architech and tell me when the PR is up.",
+    "We set up the software factory locally; should we move it to the cloud?"
   ],
   "should_not_trigger": [
     "Explain unsupervised learning.",
@@ -44,6 +48,9 @@
     "Write a factory function that builds test fixtures for my models.",
     "Register my agent's spec in the Mutagent Agent Factory.",
     "Plan the shift schedule for our car factory.",
-    "Create a GitHub Project board for our next sprint."
+    "Create a GitHub Project board for our next sprint.",
+    "Add a --verbose flag to my CLI.",
+    "Fix the off-by-one error in this pagination function.",
+    "Refactor this function to use async/await."
   ]
 }
