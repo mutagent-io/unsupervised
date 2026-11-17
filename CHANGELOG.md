@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.1.2] - unreleased
+## [0.1.2] - 2026-11-16
 
 ### Added
 - **Delegate, never implement.** The agent operating Architech hands every

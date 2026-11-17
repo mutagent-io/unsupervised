@@ -82,8 +82,12 @@ Bump these together, in one pull request:
 2. `version` in `.claude-plugin/plugin.json`
 3. the plugin's `version` in `.claude-plugin/marketplace.json`
 4. a new top entry in `CHANGELOG.md`
+5. the README's Quick start: run every method again from the public
+   repository in an empty home folder, then update its `Tested on` line and
+   the pinned `--branch v<version>` and tarball commands
 
-`check_skill.py` fails if they differ. After every push to `main`, once the
+`check_skill.py` fails if they differ, or if the Quick start's `Tested on`
+line or pinned clone names another version. After every push to `main`, once the
 Validate run for that push has passed, the Release workflow checks out that
 same commit and checks whether `v<version>` is tagged yet; if not, it tags it
 and publishes the release with the skill tarball in the same job (a tag pushed
