@@ -21,6 +21,8 @@ REFERENCES = ["install.md", "onboard.md", "workflows.md", "dispatch.md", "factor
 INSTALL_LINES = (
     "/plugin marketplace add mutagent-io/unsupervised",
     "/plugin install unsupervised@unsupervised",
+    "claude plugin marketplace add mutagent-io/unsupervised",
+    "claude plugin install unsupervised@unsupervised",
     "npx skills add mutagent-io/unsupervised",
     "git clone https://github.com/mutagent-io/unsupervised ~/.claude/skills/unsupervised",
     "git clone https://github.com/mutagent-io/unsupervised ~/.agents/skills/unsupervised",
@@ -326,11 +328,21 @@ def check_entry_point() -> None:
         fail("README's 'For agents' section must point to SKILL.md, not copy commands")
 
 
-def check_readme_install() -> None:
+def check_readme_install(fm: dict[str, str]) -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8") if (ROOT / "README.md").is_file() else ""
     for line in INSTALL_LINES:
         if not re.search(rf"^{re.escape(line)}$", readme, re.M):
             fail(f"README.md must keep the install line {line!r}")
+    # The Quick start says which release it was tested with, and pins that release.
+    # A version bump fails here until someone re-runs the Quick start and updates both.
+    version = fm.get("metadata.skill_version", "")
+    if not version:
+        return
+    if not re.search(rf"^Tested on \d{{4}}-\d{{2}}-\d{{2}} with `unsupervised` v{re.escape(version)}\b", readme, re.M):
+        fail(f"README's Quick start needs a 'Tested on <YYYY-MM-DD> with `unsupervised` v{version}' line")
+    pin = f"git clone --branch v{version} --depth 1 https://github.com/mutagent-io/unsupervised ~/.claude/skills/unsupervised"
+    if not re.search(rf"^{re.escape(pin)}$", readme, re.M):
+        fail(f"README.md must pin the current release: {pin!r}")
 
 
 def check_release_gate() -> None:
@@ -455,7 +467,7 @@ def main() -> int:
     if fm:
         check_delegate(fm)
     check_entry_point()
-    check_readme_install()
+    check_readme_install(fm)
     check_execute_merges()
     check_release_gate()
     check_links()

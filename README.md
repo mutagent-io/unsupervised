@@ -58,7 +58,8 @@ Same pipeline, two places to run it:
 On the cloud factory, label an issue before you log off and the plan is
 waiting for you in the morning.
 
-1. **Install the skill** (below) and say: "Set up the software factory here."
+1. **Install the skill** ([Quick start](#quick-start)) and say: "Set up the
+   software factory here."
 2. **Your agent installs Architech.** It asks first and shows you the
    installer. You sign in with `/login`, then `/onboard` links your GitHub
    Project board, writes project memory and rules, and commits two files:
@@ -72,40 +73,155 @@ waiting for you in the morning.
    fix, which goes on to merge as your merge rules allow; on the cloud, it
    puts the work on the board for you to label.
 
-## Install the skill
+## Quick start
 
-**Claude Code (plugin):**
+Tested on 2026-11-17 with `unsupervised` v0.1.2 (commit `a612ca5`), from
+this public repository, each method in an empty home folder, on macOS (Apple
+Silicon) with Claude Code 2.1.312, Codex CLI 0.159.0, skills CLI 1.9.0 and
+git 2.50.1. The skill names in each app were checked at its prompt, without
+sending a message. Installing the skill on Linux or Windows (WSL) is not
+tested yet.
+
+Pick one method. If you install the plugin and also keep a copy in
+`~/.claude/skills/unsupervised`, Claude Code loads the plugin and reports the
+copy as not loaded.
+
+### 1. Claude Code plugin
+
+In Claude Code:
 
 ```text
 /plugin marketplace add mutagent-io/unsupervised
 /plugin install unsupervised@unsupervised
 ```
 
-It loads when you ask about Architech or the software factory, or run it as
-`/unsupervised:unsupervised`.
+`/plugin install` asks for a scope: "Install for you (user scope)" makes it
+available in every project. The skill is active right away. Run it as
+`/unsupervised:unsupervised`, or ask about Architech or the software factory.
 
-**Any agent, with the skills CLI:**
+Or from your shell, with the same result:
 
 ```bash
-npx skills add mutagent-io/unsupervised
+claude plugin marketplace add mutagent-io/unsupervised
+claude plugin install unsupervised@unsupervised
+claude plugin list   # unsupervised@unsupervised, Version: 0.1.2, enabled
 ```
 
-**Claude Code, by hand** (runs as `/unsupervised`):
+The marketplace is this repository. Claude Code clones it over SSH and, when
+that fails, over HTTPS, so you need no GitHub account or key.
+
+| | Command |
+|---|---|
+| Update | `claude plugin marketplace update unsupervised`, then `claude plugin update unsupervised@unsupervised`, then restart Claude Code |
+| Remove | `claude plugin uninstall unsupervised@unsupervised`, then `claude plugin marketplace remove unsupervised` |
+
+### 2. Git clone
+
+**Claude Code**, for every project (runs as `/unsupervised`):
 
 ```bash
 git clone https://github.com/mutagent-io/unsupervised ~/.claude/skills/unsupervised
 ```
 
-**Codex, by hand:**
+For one repository only, run
+`git clone https://github.com/mutagent-io/unsupervised .claude/skills/unsupervised`
+at its root. Claude Code loads it once you trust that folder.
+
+**Codex**, for every project (type `$unsupervised`; Codex lists it as
+"Unsupervised (Architech)"):
 
 ```bash
 git clone https://github.com/mutagent-io/unsupervised ~/.agents/skills/unsupervised
 ```
 
-Or clone it into a repository's `.agents/skills/` to use it there only. Any
-other harness: clone it anywhere it can read, and see [For agents](#for-agents).
-Pinned versions: every [release](https://github.com/mutagent-io/unsupervised/releases)
-attaches `unsupervised-v<version>.tar.gz`.
+For one repository only, clone it into `.agents/skills/unsupervised` at its
+root.
+
+**Any other agent:** clone it into the folder your agent loads skills from,
+or anywhere it can read, and see [For agents](#for-agents).
+
+**A pinned release** (git notes that the tag "is not a commit" and that you
+are on a detached HEAD; both are expected for a tag):
+
+```bash
+git clone --branch v0.1.2 --depth 1 https://github.com/mutagent-io/unsupervised ~/.claude/skills/unsupervised
+```
+
+Every [release](https://github.com/mutagent-io/unsupervised/releases) also
+attaches `unsupervised-v<version>.tar.gz`, which unpacks to an `unsupervised`
+folder:
+
+```bash
+mkdir -p ~/.claude/skills
+curl -fsSL https://github.com/mutagent-io/unsupervised/releases/download/v0.1.2/unsupervised-v0.1.2.tar.gz | tar -xz -C ~/.claude/skills
+```
+
+Use the folder you installed into (`~/.claude/skills/unsupervised` below):
+
+| | Command |
+|---|---|
+| Update a clone | `git -C ~/.claude/skills/unsupervised pull --ff-only` |
+| Move a pinned clone to another release | `git -C ~/.claude/skills/unsupervised fetch --depth 1 origin tag v<version>`, then `git -C ~/.claude/skills/unsupervised checkout v<version>` (`git pull` changes nothing on a pinned clone) |
+| Remove | `rm -rf ~/.claude/skills/unsupervised` |
+
+### 3. The skills CLI (any agent)
+
+Needs Node.js for `npx`.
+
+```bash
+npx skills add mutagent-io/unsupervised
+```
+
+It asks which agents to install to (version 1.9.0 lists 79, some of them
+preselected), then the scope, then symlink or copy. The default, project
+scope, puts the skill in `.agents/skills/unsupervised` in the current folder,
+links it into each chosen agent's folder (for example
+`.claude/skills/unsupervised`) and writes `skills-lock.json`.
+
+For every project, for Claude Code and Codex, without questions:
+
+```bash
+npx skills add mutagent-io/unsupervised -g -a claude-code codex -y
+```
+
+That puts the skill in `~/.agents/skills/unsupervised`, where Codex reads it,
+and links `~/.claude/skills/unsupervised` to it, so Claude Code runs it as
+`/unsupervised`.
+
+| | Command |
+|---|---|
+| Update | `npx skills update -g -y` |
+| Remove | `npx skills remove unsupervised -g -y` |
+
+### What you need
+
+- **An agent that can read files and run shell commands.** tmux is optional.
+- **macOS or Linux** (on Windows, WSL), with `bash`, `curl`, `git`, and
+  `shasum` or `sha256sum`.
+- **Architech.** You don't install it first: your agent asks, downloads the
+  installer with
+  `curl -fsSL https://api.mutagent.io/architech/install.sh -o architech-install.sh`,
+  shows it to you, and you run `bash architech-install.sh` in your own
+  terminal. The installer asks for your email there; from an agent's shell
+  it stops with "a terminal is required". See the
+  [install docs](https://docs.mutagent.io/architech/install).
+- **The GitHub CLI, signed in** (`gh auth status`), for the stages that work
+  on GitHub, such as `/publish` and `/ship`.
+- **A model provider.** You sign in inside the Architech session with
+  `/login`, never in chat.
+
+## When it loads
+
+The skill's description tells your agent to use it when you install, set up
+or run Architech or its Software Factory, pick a lifecycle command, or hand
+Architech a task, and, in a repository already set up with Architech, for any
+build, fix or feature request. It is not for unsupervised machine learning,
+building or evaluating LLM agents (Helix), the Agent Factory
+(`mutagent factory`) or changing Architech itself.
+
+In a repository that isn't set up with Architech, when you didn't ask for
+Architech, it steps aside: your agent says in one line that the repository
+isn't set up and offers to onboard it, instead of taking the task over.
 
 ## Then say
 
@@ -117,9 +233,10 @@ attaches `unsupervised-v<version>.tar.gz`.
 
 ## It never merges without you
 
-- **Approvals are labels only a person can add.** The factory ignores labels
-  from bots and apps. Your agent never adds one, never approves a gate for
-  you, and never merges.
+- **Approvals are yours.** Locally, you answer the session. On the cloud
+  factory, an approval is a label only a person can add: labels from bots
+  and apps approve nothing. Your agent never adds one, never approves a gate
+  for you, and never merges.
 - **Every change lands as a pull request.** The merge waits for your approval
   at every autonomy level.
 - **It asks before it installs or writes anything**, and shows you the
