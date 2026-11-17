@@ -107,8 +107,12 @@ claude plugin install unsupervised@unsupervised
 claude plugin list   # unsupervised@unsupervised, Version: 0.1.2, enabled
 ```
 
-The marketplace is this repository. Claude Code clones it over SSH and, when
-that fails, over HTTPS, so you need no GitHub account or key.
+The marketplace is this repository. The plugin installs from this
+repository's own marketplace and is not listed in Anthropic's official plugin
+directory, so a search in `/plugin` Discover won't find it until you add this
+marketplace (the first command above). Claude Code clones the marketplace
+over SSH and, when that fails, over HTTPS, so you need no GitHub account or
+key.
 
 | | Command |
 |---|---|
