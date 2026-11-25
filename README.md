@@ -258,10 +258,12 @@ isn't set up and offers to onboard it, instead of taking the task over.
   never merges.
 - **Every change lands as a pull request.** When a person is asked depends on
   `policy.autonomy`: `calibrating` (the default) waits for you on every plan
-  and every merge; `approve-merges` on every merge; `approve-plans` on every
-  plan, then merges a pull request on its own once the review says APPROVE
-  or WATCH and CI is green; `unsupervised` waits on neither (a spec-sized
-  plan, and the exceptions it escalates, still ask). A repository with no
+  and every merge; `approve-merges` on every merge and on a spec-sized plan
+  (a small plan starts by itself); `approve-plans` on every plan, then merges
+  a pull request on its own once the review says APPROVE or WATCH and CI is
+  green; `unsupervised` only on a spec-sized plan. A merge that runs by itself
+  still asks on an exception (an uncovered protected file, an advisory
+  review, a change bigger than its plan, facts it could not read). A repository with no
   factory file asks before every merge. Your agent never changes that
   setting without your yes.
 - **It asks before it installs or writes anything**, and shows you the

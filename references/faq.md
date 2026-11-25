@@ -21,9 +21,9 @@ factory's `policy.autonomy` in `factory.yaml`:
 | Preset | Waits for you on |
 |---|---|
 | `calibrating` (the default) | Every plan and every merge |
-| `approve-merges` | Every merge (a small plan starts by itself) |
+| `approve-merges` | Every merge and a spec-sized plan (a small plan starts by itself) |
 | `approve-plans` | Every plan; a pull request merges by itself once its review says APPROVE or WATCH and CI is green on the exact head |
-| `unsupervised` | Neither (a spec-sized plan still waits) |
+| `unsupervised` | Only a spec-sized plan (a small plan starts by itself; a pull request merges as under `approve-plans`) |
 
 A repository with no factory file asks before every merge. Even a merge that
 runs by itself asks you for a protected path, an advisory review or a change

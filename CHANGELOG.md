@@ -13,9 +13,10 @@ Checked against Architech 0.1.66 (`metadata.architech_checked`).
 - **When a person is asked.** The skill, README, FAQ and workflows page said
   every merge waits for the user at every autonomy level. They now say it per
   `policy.autonomy` preset: `calibrating` (the default) waits on every plan
-  and every merge; `approve-merges` on every merge; `approve-plans` on every
-  plan and merges by itself once the review says APPROVE or WATCH and CI is
-  green; `unsupervised` on neither (a spec-sized plan still waits). A
+  and every merge; `approve-merges` on every merge and on a spec-sized plan;
+  `approve-plans` on every plan and merges by itself once the review says
+  APPROVE or WATCH and CI is green; `unsupervised` only on a spec-sized plan.
+  A merge that runs by itself still asks on an exception. A
   repository with no factory file asks before every merge. Review sends work
   back at most 2 rounds by default.
 - `references/factory.md` speaks the 0.1.66 `factory.yaml` language: the four

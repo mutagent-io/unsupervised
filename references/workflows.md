@@ -38,8 +38,12 @@ pass, has the pull request reviewed, then merges it as the merge rules allow
 and starts `/monitor` (not with `--local`). What the user approves depends on
 the factory's `policy.autonomy`: with no factory file, the merge; under
 `calibrating` (the default once `factory.yaml` exists), the plan and the
-merge; under `approve-merges`, the merge; under `approve-plans`, the plan;
-under `unsupervised`, only what it escalates. Say which before you start it,
+merge; under `approve-merges`, the merge and a spec-sized plan (a
+spec-classed request goes through `/spec`'s sign-offs); under
+`approve-plans`, the plan, and a merge only on an exception (an uncovered
+protected file, an advisory review, a change bigger than its plan, facts it
+could not read); under `unsupervised`, a spec-sized plan and a merge only on
+an exception. Say which before you start it,
 and relay every question it asks. `--interactive` pauses after the plan;
 `--dry-run` writes the plan only.
 
