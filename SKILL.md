@@ -27,8 +27,8 @@ compatibility: >-
   installer's email prompt.
 metadata:
   author: mutagent
-  skill_version: "0.1.3"
-  architech_checked: "0.1.66"
+  skill_version: "0.1.4"
+  architech_checked: "0.1.67"
   homepage: "https://github.com/mutagent-io/unsupervised"
   docs: "https://docs.mutagent.io/architech/overview"
 ---

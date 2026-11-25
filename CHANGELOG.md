@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.1.4] - 2026-11-25
+
+Checked against Architech 0.1.67 (`metadata.architech_checked`).
+
+### Changed
+- Re-checked on Architech 0.1.67, the current release: the four autonomy
+  presets and their gates, the retired `factory.yaml` forms, `factory init`
+  (still needs `--project` and an existing folder), the `update --check`
+  output, and the headless runner (smoke test, a question it can't ask).
+- The repository-issues board (`ref: { owner, repo }`) for personal accounts:
+  Cloud accepts it, but `architech factory validate` and `push` still refuse
+  it on 0.1.67, despite its release notes. The skill now says so, instead of
+  saying 0.1.67 fixes it; the failure table names the workaround (an
+  organisation's Project) until a CLI fix ships.
+
 ## [0.1.3] - 2026-11-25
 
 Checked against Architech 0.1.66 (`metadata.architech_checked`).
