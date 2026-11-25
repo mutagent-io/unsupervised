@@ -36,8 +36,8 @@ your board and taking work.
 - **Your board as the queue.** The plan becomes a parent issue with one
   sub-issue per task, on your board: a GitHub Project owned by an
   organisation, or, for a personal account, the repository's own issues
-  (the `architech factory` CLI accepts that form from Architech 0.1.67, not
-  yet released).
+  (Cloud accepts that form; the `architech factory` CLI still refuses it on
+  Architech 0.1.67, and a fix is pending).
 - **Agents that build the tasks in parallel** and open the pull requests.
 - **Review by an agent that didn't write the code.** It sends work back to
   the builder; after two rounds by default, it comes to you.
@@ -87,12 +87,12 @@ request) is waiting in the morning.
 
 ## Quick start
 
-Tested on 2026-11-25 with `unsupervised` v0.1.3, from its release branch in
+Tested on 2026-11-25 with `unsupervised` v0.1.4, from its release branch in
 a local clone before the release, each method in an empty home folder, on
 macOS (Apple Silicon) with Claude Code 2.1.312, skills CLI 1.9.0 and git
-2.50.1: the plugin installed as version 0.1.3, and both clones and
+2.50.1: the plugin installed as version 0.1.4, and both clones and
 `npx skills add` put the skill where this section says. The pinned clone and
-the tarball below exist once v0.1.3 is released. The skill names in each app
+the tarball below exist once v0.1.4 is released. The skill names in each app
 (and Codex CLI 0.159.0) were last checked at its prompt with v0.1.2.
 Installing the skill on Linux or Windows (WSL) is not tested yet.
 
@@ -118,7 +118,7 @@ Or from your shell, with the same result:
 ```bash
 claude plugin marketplace add mutagent-io/unsupervised
 claude plugin install unsupervised@unsupervised
-claude plugin list   # unsupervised@unsupervised, Version: 0.1.3, enabled
+claude plugin list   # unsupervised@unsupervised, Version: 0.1.4, enabled
 ```
 
 The marketplace is this repository. The plugin installs from this
@@ -162,7 +162,7 @@ or anywhere it can read, and see [For agents](#for-agents).
 are on a detached HEAD; both are expected for a tag):
 
 ```bash
-git clone --branch v0.1.3 --depth 1 https://github.com/mutagent-io/unsupervised ~/.claude/skills/unsupervised
+git clone --branch v0.1.4 --depth 1 https://github.com/mutagent-io/unsupervised ~/.claude/skills/unsupervised
 ```
 
 Every [release](https://github.com/mutagent-io/unsupervised/releases) also
@@ -171,7 +171,7 @@ folder:
 
 ```bash
 mkdir -p ~/.claude/skills
-curl -fsSL https://github.com/mutagent-io/unsupervised/releases/download/v0.1.3/unsupervised-v0.1.3.tar.gz | tar -xz -C ~/.claude/skills
+curl -fsSL https://github.com/mutagent-io/unsupervised/releases/download/v0.1.4/unsupervised-v0.1.4.tar.gz | tar -xz -C ~/.claude/skills
 ```
 
 Use the folder you installed into (`~/.claude/skills/unsupervised` below):

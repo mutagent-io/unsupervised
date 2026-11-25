@@ -44,7 +44,7 @@ project. It asks:
 | Question | How to help the user answer |
 |---|---|
 | New project or existing code? (asked only when the folder is not empty) | Say what you see in the repository |
-| Connect a GitHub Project board (owner and project number), or leave it out? | A local factory file is created either way. The same question asks to approve the local writes, one commit of the factory file and its pointer (no push), and creating missing labels on GitHub: a write or commit question, so relay it. For a first try, recommend leaving the board out. A Project owned by a personal account works locally, but Mutagent Cloud can't bind it; the cloud then uses the repository's issues ([factory.md](factory.md), section 2) |
+| Connect a GitHub Project board (owner and project number), or leave it out? | A local factory file is created either way. The same question asks to approve the local writes, one commit of the factory file and its pointer (no push), and creating missing labels on GitHub: a write or commit question, so relay it. For a first try, recommend leaving the board out. A Project owned by a personal account works locally, but Mutagent Cloud can't bind it. The cloud alternative, the repository's issues, can't be pushed from the CLI yet on 0.1.67 ([factory.md](factory.md), section 2); for the cloud, use an organisation's Project |
 | May it scan the repository to draft context and rules? (existing code only) | It never scans without a yes. Scanning gives better drafts; the user can still edit them |
 
 To connect a board later, a bare `/onboard` doesn't ask again (the board
@@ -108,7 +108,7 @@ them. With the user's yes, ask Architech to run `architech-onboard labels
 - Onboarding set up the local factory (`mode: local`), with or without a
   board. Next, ask the user whether to move it to Mutagent Cloud, and never
   move it without a yes: [factory.md](factory.md), section 4. The cloud needs
-  a board: an organisation's GitHub Project, or the repository's issues on a
-  personal account.
+  a board: an organisation's GitHub Project (the repository's issues, for a
+  personal account, can't be pushed from the CLI yet on 0.1.67).
 - Next: [workflows.md](workflows.md) to pick a first piece of work, which
   Architech builds; you hand it over, you don't write it.

@@ -32,7 +32,7 @@ mode fits: see section 1 of [SKILL.md](../SKILL.md).
 
 A headless run has nobody to ask, so its ask-the-user tool is not offered at
 all. The run decides by itself or stops and says why, and it still exits 0.
-Checked on 0.1.66: a headless run that was told to ask a question had no way to,
+Checked on 0.1.67: a headless run that was told to ask a question had no way to,
 and ended `BLOCKED`. So the brief carries every answer up front and says
 "open a pull request, do not merge".
 

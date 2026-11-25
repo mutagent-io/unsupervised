@@ -8,7 +8,7 @@
       "name": "unsupervised",
       "source": "./",
       "description": "Install Architech, Mutagent's software-engineering harness (Early Access), onboard a repository, set up its Software Factory locally or on Mutagent Cloud, and hand it work: agents plan, build, review and ship. Works from any agent harness that can run shell commands.",
-      "version": "0.1.3",
+      "version": "0.1.4",
       "category": "development",
       "tags": ["architech", "mutagent", "onboarding", "headless", "software-factory", "agent-skills"],
       "homepage": "https://github.com/mutagent-io/unsupervised",
