@@ -1,6 +1,7 @@
 # Which command, which flow
 
-Sources: the boot screen of a session; https://docs.mutagent.io/architech/agents
+Sources: the boot screen of a session; https://docs.mutagent.io/architech/agents;
+https://docs.mutagent.io/architech/lifecycle-commands
 
 ## 0. Who does the work
 
@@ -24,19 +25,23 @@ tracks work on a GitHub board.
 
 | Step | What happens | Who decides |
 |---|---|---|
-| `/spec` | Requirements -> design -> tasks | **The user approves the plan** and its acceptance criteria |
+| `/spec` | Requirements -> design -> tasks | **The user approves the plan** and its acceptance criteria (unless the factory sets `policy.plan.approve: never`) |
 | `/publish` | The approved tasks become GitHub issues (a parent and sub-issues) | |
-| `/dispatch <issue>` | The tasks go to agents in parallel; each becomes a pull request | |
-| `/review <issue or PR>` | A different agent reviews; work goes back to build until it passes | |
-| `/ship <PR>` | Review + CI + merge + watch, under the project's merge rules | **The user allows the merge** |
+| `/dispatch <issue>` | The tasks go to agents in parallel. Independent fixes get one pull request each; a planned feature is built in waves on one branch, with one pull request per repository. Nothing merges yet | |
+| `/review <issue or PR>` | A different agent reviews it; findings go back to the builder, up to the factory's review-loop limit (2 by default) | |
+| `/ship <PR>` | Review + CI + merge + watch, under the project's merge rules | **The user allows the merge**, unless the factory's preset (`approve-plans`, `unsupervised`) lets `/ship` merge on a passing review and green CI |
 
 ## 3. Fast Mode: /execute -> /review -> /ship
 
 For a contained change, no board needed. `/execute` plans and builds in one
 pass, has the pull request reviewed, then merges it as the merge rules allow
-and starts `/monitor`. In Fast Mode the merge is what the user approves:
-say so before you start it, and relay its merge question. `--interactive`
-pauses after the plan; `--dry-run` writes the plan only.
+and starts `/monitor` (not with `--local`). What the user approves depends on
+the factory's `policy.autonomy`: with no factory file, the merge; under
+`calibrating` (the default once `factory.yaml` exists), the plan and the
+merge; under `approve-merges`, the merge; under `approve-plans`, the plan;
+under `unsupervised`, only what it escalates. Say which before you start it,
+and relay every question it asks. `--interactive` pauses after the plan;
+`--dry-run` writes the plan only.
 
 ```text
 /execute "Fix the off-by-one in pagination and add a test"

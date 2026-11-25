@@ -32,7 +32,7 @@ mode fits: see section 1 of [SKILL.md](../SKILL.md).
 
 A headless run has nobody to ask, so its ask-the-user tool is not offered at
 all. The run decides by itself or stops and says why, and it still exits 0.
-Checked on 0.1.49: a headless run that was told to ask a question had no way to,
+Checked on 0.1.66: a headless run that was told to ask a question had no way to,
 and ended `BLOCKED`. So the brief carries every answer up front and says
 "open a pull request, do not merge".
 
@@ -42,6 +42,8 @@ and ended `BLOCKED`. So the brief carries every answer up front and says
 <skill-dir>/scripts/run-headless.sh --cwd <project> (--brief <file> | --prompt "<text>")
                                     [--timeout <seconds>] [--run <dir>]
 ```
+
+`--timeout` defaults to 900 seconds.
 
 `<skill-dir>` is the folder holding the skill's `SKILL.md`; the runner is
 there, not in the project. Call it by its absolute path so it works whatever
@@ -73,7 +75,7 @@ straight to option 3: it is the one that doesn't depend on the call.
 
 3. **A detached tmux session**, if tmux is installed: the tmux server keeps
    the runner alive whatever happens to the call, and the session closes by
-   itself when the runner is done (checked on 0.1.49). `-f /dev/null` keeps the
+   itself when the runner is done (checked on 0.1.66). `-f /dev/null` keeps the
    user's tmux config out of this private server: plugins in it can restore
    their saved sessions into it, or save over them.
 
@@ -100,7 +102,7 @@ Each time you check, one of three things is true:
 | What you see | Meaning | Do this |
 |---|---|---|
 | `verdict.txt` exists | The run ended | Read it (verdicts below) |
-| No `verdict.txt`; the runner is still running (`pgrep -fl "run-headless.sh .*--run /abs/run"`) | Still working | Wait and check again |
+| No `verdict.txt`; the runner is still running (`pgrep -fl "run-headless.sh .*--run /abs/run"`, which needs the `--run` you started it with) | Still working | Wait and check again |
 | No `verdict.txt`; the runner is gone | Your harness killed the runner outright (a hard kill no script can catch). Architech may still be running, with no cap and nobody watching | Stop exactly that run: `kill -TERM -- -"$(cat /abs/run/pgid.txt)"`. Then start it again with option 3 or 4 |
 
 `pgid.txt` names Architech's process group for this run only, so the command
@@ -130,8 +132,10 @@ The run directory holds:
 | `pgid.txt` | Architech's process group, for stopping this run and only this run |
 | `verdict.txt` | `DONE`, `BLOCKED`, `FAILED`, `NO_VERDICT`, `TIMEOUT` or `INTERRUPTED` |
 
-It prints one line, `run=<dir> rc=<code> verdict=<verdict>`, and exits 0 once a
-verdict is written: read the verdict, not the script's exit code.
+It prints one line, `run=<dir> rc=<code> verdict=<verdict>`. It exits 0 once a
+verdict is written, or 128+n when the runner itself was stopped by signal n
+(verdict `INTERRUPTED`), and 2 on bad arguments or a refused prompt: read the
+verdict, not the script's exit code.
 
 By hand, without the script:
 
@@ -144,8 +148,8 @@ plus your own wall-clock cap.
 ### Non-negotiables
 
 1. **Close stdin.** Print mode waits on an open stdin; an agent's shell keeps
-   it open, so the run never returns. Checked on 0.1.49: with stdin open, a run
-   that answers in seconds was still waiting after 15 s.
+   it open, so the run never returns. Checked on 0.1.66: with stdin open, a run
+   that answers in seconds printed nothing until the pipe closed.
 2. **Always `-p`.** A bare `architech` opens the interactive screen and never
    returns.
 3. **Cap the wall clock**, and stop the process group, not just the parent.
@@ -179,9 +183,9 @@ plus your own wall-clock cap.
 ### What happens to questions
 
 Yes, it can ask. The background session is the normal interactive one, so a
-question appears in the pane as a menu with numbered options. Checked on 0.1.49
-with tmux 3.6a: the question showed in the pane, `Down` then `Enter` picked the
-second option, and the session carried on with that answer.
+question appears in the pane as a menu with numbered options. Checked on 0.1.66
+with tmux 3.6a: the question showed in the pane, `Down` and `Up` moved the
+selection, `Enter` picked it, and the session carried on with that answer.
 
 ### Commands (tmux is the only extra tool)
 
@@ -208,9 +212,10 @@ Two rules for every tmux command:
 | Stop, if `/exit` gets no answer | see below |
 
 If the session does not respond to `/exit`, stop Architech itself, not just
-the tmux session. `kill-session` alone can leave Architech running with no
-screen: checked on 0.1.49, it survived the session's hangup. Stop the pane's
-process group instead; the pane, and the session, then close on their own:
+the tmux session. `kill-session` alone could leave Architech running with no
+screen (seen on 0.1.49; not reproduced on 0.1.66). Stop the pane's process
+group instead, which is safe on every release; the pane, and the session,
+then close on their own:
 
 ```bash
 pid=$(tmux -L unsupervised display-message -p -t '=arch-<task>:' '#{pane_pid}')

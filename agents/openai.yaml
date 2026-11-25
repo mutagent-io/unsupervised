@@ -1,6 +1,7 @@
 interface:
   display_name: "Unsupervised (Architech)"
-  short_description: "Install, onboard and run Architech: agents that plan, build, review and ship code"
+  short_description: "Architech's Software Factory (Early Access), from any harness"
+  icon_large: "./assets/icon.png"
   default_prompt: "Use $unsupervised to set up Architech in this repository."
 policy:
   allow_implicit_invocation: true

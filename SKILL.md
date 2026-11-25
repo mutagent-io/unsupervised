@@ -3,19 +3,19 @@ name: unsupervised
 description: >-
   Architech, Mutagent's software-engineering harness, and its Software
   Factory: install it, onboard a repository, set up the factory locally
-  (then on Mutagent Cloud if the user wants) and hand it work; agents plan,
-  build, review and ship, the user approves plan and merge. Works from any
-  agent harness that can run shell commands. Use to set up or operate
-  Architech or the factory, pick a lifecycle command (/spec, /publish,
-  /dispatch, /execute, /review, /ship, /monitor), or hand Architech a task.
-  In a repository already set up with Architech, also use for any build, fix
-  or feature request: delegate it, never write the code yourself. Triggers:
-  "architech", "install architech", "set up architech", "run architech",
-  "dispatch to architech", "delegate to architech", "architech -p",
-  "software factory", "architech factory", "let agents build this
-  unsupervised". Not for unsupervised machine learning, for building or
-  evaluating LLM agents (Helix), for the Agent Factory (mutagent factory),
-  or for changing Architech itself.
+  (then on Mutagent Cloud if wanted) and hand it work; agents plan, build,
+  review and ship, by default the user approves plan and merge. Works
+  from any agent harness that can run shell commands. Use to set up or
+  operate Architech or the factory, pick a lifecycle command (/spec,
+  /publish, /dispatch, /execute, /review, /ship, /monitor), or hand
+  Architech a task. In a repository already set up with Architech, also for
+  any build, fix or feature request: delegate it, never write the code
+  yourself. Triggers: "architech", "install architech", "set up architech",
+  "run architech", "dispatch to architech", "delegate to architech",
+  "architech -p", "software factory", "architech factory", "let agents
+  build this unsupervised". Not for unsupervised machine learning, for
+  building or evaluating LLM agents (Helix), for the Agent Factory
+  (mutagent factory), or for changing Architech itself.
 license: MIT
 compatibility: >-
   Any agent harness that can read files and run shell commands; tmux is
@@ -27,8 +27,8 @@ compatibility: >-
   installer's email prompt.
 metadata:
   author: mutagent
-  skill_version: "0.1.2"
-  architech_checked: "0.1.49"
+  skill_version: "0.1.3"
+  architech_checked: "0.1.66"
   homepage: "https://github.com/mutagent-io/unsupervised"
   docs: "https://docs.mutagent.io/architech/overview"
 ---
@@ -37,10 +37,12 @@ metadata:
 
 Architech is a harness for software engineering. You run `architech` in a
 repository, describe the change, and a team of agents plans it, builds it,
-tests it and reviews it. The person stays in charge of two things: **the plan**
-and **the merge**. "Unsupervised" means the agents do the work in between
-without someone watching each step; it never means skipping those two
-approvals.
+tests it and reviews it. With the default policy (`calibrating`) the person
+approves **every plan** and **every merge**; "unsupervised" here means the
+agents do the work in between without someone watching each step. The
+factory's own `unsupervised` autonomy preset is different: it lets small
+plans start and reviewed, green changes merge on their own (references/factory.md,
+section 2). You never change that setting without the user's explicit ask.
 
 This skill is for the agent the user talks to: **your harness**, operating
 Architech and its Software Factory for them, locally and on Mutagent Cloud. It
@@ -85,7 +87,7 @@ What is known per host:
 |---|---|
 | **Claude Code** | Loads this skill natively (plugin, or a folder in `~/.claude/skills`). A shell call stops after 2 minutes by default, 10 at most; it can run a command in the background and come back to it. |
 | **Codex** | Loads this skill from `~/.agents/skills` or a repository's `.agents/skills`. Checked with codex-cli 0.159.0 in its default sandbox: every `tmux -L unsupervised` call (its socket lives outside the workspace), `architech update --check` (it writes outside the workspace) and `pgrep` stop for your approval, about 25 for a setup and one run; reads in the workspace and the headless run itself need none. Expect them and approve each one. Codex offers to stop asking for `tmux -L unsupervised` commands, but that saves a lasting rule: choose it only if you want it permanently. |
-| **Other harnesses** (for example GrokBot) | Point it at [AGENTS.md](AGENTS.md) or this file. Before the first run, find out from its docs or a quick test: does a shell call have a time limit, does a process started with `nohup ... &` survive the call, is tmux installed, and can it ask you a question mid-task? Section 5 picks the mode from the answers. |
+| **Other harnesses** | Point it at [AGENTS.md](AGENTS.md) or this file. Before the first run, find out from its docs or a quick test: does a shell call have a time limit, does a process started with `nohup ... &` survive the call, is tmux installed, and can it ask you a question mid-task? Section 5 picks the mode from the answers. |
 
 ## 2. Ground rules (every phase)
 
@@ -94,16 +96,19 @@ What is known per host:
 2. **Show the installer before it runs.** Download it to a file, let the user
    read it, then run it. Never pipe a script you have not shown into a shell.
 3. **The first install needs the user's own terminal.** The installer asks for
-   an email on a terminal prompt, which no agent's shell can answer. Anyone
-   can install; the email is all it asks for.
+   an email on a terminal prompt, which no agent's shell can answer. It asks
+   only for an email, which the download service must accept (Early Access).
 4. **No secrets on a command line.** Model sign-in happens inside a session
    with `/login`, by the user. Never ask for a key in chat or a command.
 5. **The live session owns the command list.** For anything not named in
    section 6, run `/help` and use what it prints; never guess a command.
-6. **A finished task is not permission to merge.** The user approves the plan
-   before the build and the pull request before it lands. Headless runs open
-   pull requests only. `/ship` and `/execute` can merge: they are the user's,
-   in an interactive session, and you tell the user that before you start one.
+6. **A finished task is not permission to merge.** You never merge, and you
+   never approve a plan or a merge for the user. When Architech asks is the
+   factory's `policy.autonomy`: under the default, `calibrating`, every plan
+   and every merge waits for the user; with no factory file, every merge
+   does. Headless runs open pull requests only. `/ship` and `/execute` can
+   merge: they are the user's, in an interactive session, and you tell the
+   user that before you start one.
 7. **Report what Architech said, not what you hoped.** Quote its output and
    its last line. An exit code of 0 means the turn ended, not that the work
    is done.
@@ -114,7 +119,8 @@ What is known per host:
 1. **Already there?** `architech --version`. A version means it is installed:
    run `architech update --check` and go to section 4.
 2. **Check the machine:** macOS or Linux, `bash`, `curl`, `git`, and
-   `shasum` or `sha256sum`. Windows: use WSL.
+   `shasum` or `sha256sum`. Windows is not supported; WSL (Linux) may work
+   but is untested.
 3. **Ask, then download and show the installer:**
    ```bash
    curl -fsSL https://api.mutagent.io/architech/install.sh -o architech-install.sh
@@ -144,17 +150,19 @@ use it too.
 
 What onboarding asks and writes: [references/onboard.md](references/onboard.md).
 
-**Local first, then ask about the cloud.** Onboarding with a GitHub Project
-board sets up the local factory: a `factory.yaml` with `mode: local`, worked
+**Local first, then ask about the cloud.** Onboarding sets up the local
+factory, with or without a board: a `factory.yaml` with `mode: local`, worked
 from the user's own session ([references/factory.md](references/factory.md),
 section 2). Once onboarding is done, ask the user whether to move the factory
-to Mutagent Cloud, and say what that means: on the cloud, board items a person
-labels run in Mutagent's sandboxes, even with this machine off, and approvals
-are labels; local keeps every run in their session on this machine. Never
+to Mutagent Cloud, and say what that means: on the cloud, issues on the board
+that a person labels for pickup run in Mutagent's sandboxes, even with this
+machine off, and the user approves on GitHub (labels or a pull-request
+review); local keeps every run in their session on this machine. Never
 move it without a yes. "Not now" means stay local and carry on with the work;
 don't ask again unless they bring it up. A yes: factory.md, section 4. No
-board yet? Ask anyway, and say the cloud needs a GitHub Project board, added
-by running `/onboard` again; meanwhile Architech works locally without one.
+board yet? Ask anyway, and say the cloud needs one: an organisation's GitHub
+Project, or, on a personal account, the repository's own issues
+(factory.md, section 2); meanwhile Architech works locally without one.
 
 ## 5. Operate: hand work to Architech
 
@@ -174,7 +182,8 @@ project. Check, then route; the first match wins:
 3. **A local factory, or Architech without a board:** start Architech in the
    repository, in a background session or headless (below). A feature:
    `/spec` -> `/publish` -> `/dispatch`. A contained change:
-   `/execute "<goal>"`, which merges as the merge rules allow: say so first.
+   `/execute "<goal>"`, which merges as the merge rules allow (by default,
+   `calibrating`, the user approves the merge): say so first.
    Or type the request in plain words and let the session pick.
 4. **The user asked for Architech, but it is not installed or not
    onboarded:** set it up first (sections 3 and 4, local first, then the
@@ -211,8 +220,8 @@ only by name or URI, try these in order and use the first where
 1. `./.claude/skills/unsupervised` and `./.agents/skills/unsupervised` (in the
    project)
 2. `~/.claude/skills/unsupervised` and `~/.agents/skills/unsupervised`
-3. `~/.claude/plugins/marketplaces/unsupervised` (where a plugin install puts
-   this repository)
+3. `~/.claude/plugins/cache/<marketplace>/unsupervised/<version>/` (the
+   installed plugin copy; use the newest version)
 
 Never search the whole home folder, never run a copy from another project, and
 never re-type the runner from what you read. If none of these has it, ask the
@@ -296,16 +305,16 @@ with the user.
 | `/spec` | Plan | requirements -> design -> tasks; you approve the plan |
 | `/publish` | Plan | turns the approved tasks into GitHub issues |
 | `/dispatch <issue>` | Build | sends a planned issue's tasks to agents in parallel |
-| `/execute "<goal>"` | Build | plans, builds, reviews, then merges as your merge rules allow; you approve the merge |
-| `/review <issue or PR>` | Review | code review by an agent that did not write it |
+| `/execute "<goal>"` | Build | plans, builds, reviews, then merges as your merge rules allow (by default you approve the plan and the merge) |
+| `/review <issue or PR>` | Review | code review by an agent that did not write it; findings go back to the builder, 2 rounds by default |
 | `/ship <PR>` | Ship | review + CI + merge + watch, under your merge rules |
 | `/monitor` | Monitor | CI/CD, deploy health, production |
 
 **Session essentials:** `/help` (every command), `/login`, `/model`,
 `/onboard`, `/status` (progress of dispatched work), `/sync` (read the
 project board), `/agents` (the agent roster), `/trace` (browse session logs,
-read-only), `/mcp` (your MCP servers), `/workflows` (saved multi-agent
-scripts).
+read-only), `/mcp` (manage your MCP servers), `/workflows` (list saved
+multi-agent scripts; it doesn't run them).
 
 **Shell:** `architech --version`, `architech doctor --strict`,
 `architech update --check`, `architech update`.
@@ -315,11 +324,13 @@ crosses files or repositories, or a team that tracks work in GitHub ->
 Full-Loop. Details: [references/workflows.md](references/workflows.md).
 
 **Software Factory** (board issues to reviewed pull requests). Local first:
-the user's own session runs the board work (`/onboard` with a board writes
+the user's own session runs the board work (`/onboard` writes
 `factory.yaml`; then `/sync`, `/spec` -> `/publish` -> `/dispatch`, or
-`/execute`, which can merge). Cloud, only after the user says yes: Mutagent
-Cloud's sandboxes pick up board items a person labels, after
-`architech factory push` and `enable`. Its shell CLI is
+`/execute`, which can merge). Who approves what is the file's
+`policy.autonomy` (factory.md, section 2). Cloud, only after the user says
+yes: Mutagent Cloud's sandboxes pick up issues on the board that a person
+labels, after the user signs in, connects GitHub, and runs
+`architech factory push` and `enable` (factory.md, section 4). Its shell CLI is
 `architech factory`, not `mutagent factory` (a different product). Approval,
 pickup and hold labels are the user's to set: never add or remove one, never approve
 a gate or answer its question yourself, never merge. Details:
@@ -343,5 +354,6 @@ a gate or answer its question yourself, never merge. Details:
 
 - Architech docs: https://docs.mutagent.io/architech/overview (install,
   onboard, agents, features)
+- Software Factory docs: https://docs.mutagent.io/factory/overview
 - This skill: https://github.com/mutagent-io/unsupervised
 - Agent Skills format: https://agentskills.io/specification

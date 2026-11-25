@@ -9,7 +9,9 @@
 **idea → spec → board → agents build in parallel → independent review → CI →
 merged PR**
 
-You sign off on the plan and the merge. The agents do the rest.
+By default you sign off on every plan and every merge; `policy.autonomy` in
+`factory.yaml` lets you hand either one to the factory. The agents do the
+rest.
 
 Once a repository is set up, ask your agent for a feature or a fix and it
 hands the work to Architech's factory: it writes the brief, relays the
@@ -32,17 +34,23 @@ your board and taking work.
 - **A plan before any code.** Requirements, design, tasks and an acceptance
   spec. In the Full-Loop, nothing gets built until you approve it.
 - **Your board as the queue.** The plan becomes a parent issue with one
-  sub-issue per task, on your GitHub Project board.
+  sub-issue per task, on your board: a GitHub Project owned by an
+  organisation, or, for a personal account, the repository's own issues
+  (the `architech factory` CLI accepts that form from Architech 0.1.67, not
+  yet released).
 - **Agents that build the tasks in parallel** and open the pull requests.
 - **Review by an agent that didn't write the code.** It sends work back to
-  the builder; after two rounds, it comes to you.
+  the builder; after two rounds by default, it comes to you.
 - **CI that bounces back.** On the cloud factory, failed CI on its branch
-  sends the work back to the builder, not to you.
-- **A pull request waiting for one decision: yours.**
+  sends the work back to the builder, not to you; past the round limit, it
+  asks you.
+- **A pull request waiting for your decision** (unless you set the factory
+  to merge reviewed, green pull requests on its own).
 
 Small fix? Skip the ceremony: `/execute "fix the off-by-one in pagination"`
-plans, builds, gets the pull request reviewed and merges it as your merge
-rules allow. In Fast Mode, the merge is what you approve.
+plans, waits for your plan approval when your autonomy preset asks for it
+(the default does), builds, gets the pull request reviewed and merges it as
+your merge rules allow.
 
 ## How it runs, in 60 seconds
 
@@ -51,23 +59,27 @@ Same pipeline, two places to run it:
 | | Local factory | Cloud factory |
 |---|---|---|
 | Runs in | Your own Architech session | Mutagent Cloud sandboxes |
-| Work starts when | You type `/dispatch 42` | Someone adds the pickup label to an issue |
-| You approve by | Answering the session | Adding a label on the issue or PR |
+| Work starts when | You type `/dispatch 42` | Someone adds the pickup label to an issue on the board (not in Triage) |
+| You approve by | Answering the session | Adding a label on the issue or PR, a PR review, or `architech factory runs approve` |
 | Best for | Trying it on one repository | A board that keeps moving with your laptop shut |
 
-On the cloud factory, label an issue before you log off and the plan is
-waiting for you in the morning.
+On the cloud factory, put an issue on the board and label it before you log
+off, and its plan (or, for a small change under a looser preset, its pull
+request) is waiting in the morning.
 
 1. **Install the skill** ([Quick start](#quick-start)) and say: "Set up the
    software factory here."
-2. **Your agent installs Architech.** It asks first and shows you the
-   installer. You sign in with `/login`, then `/onboard` links your GitHub
-   Project board, writes project memory and rules, and commits two files:
-   `factory.yaml` and a one-line pointer in `CLAUDE.md`. That is your local
-   factory.
+2. **Your agent gets Architech installed.** It asks first, downloads the
+   installer and shows it to you; you run it in your own terminal. You sign
+   in with `/login`, then `/onboard` writes project memory and rules, links
+   your GitHub Project board if you want one, and commits two files:
+   `.architech/factory/factory.yaml` and a short pointer in `CLAUDE.md`
+   (with or without a board). That is your local factory.
 3. **Your agent asks about the cloud.** Stay local, or move the factory to
-   Mutagent Cloud: it walks you through `architech factory push` and `enable`
-   only after you say yes. Then the board runs itself, up to your approvals.
+   Mutagent Cloud: it walks you through `architech factory login`, a model
+   provider for your workspace, connecting GitHub, then
+   `architech factory push` and `enable`, only after you say yes. Then the
+   board runs itself, up to your approvals.
 4. **Hand it work:** ask for the feature or the fix in plain words. Your agent
    starts `/spec`, then `/publish` and `/dispatch`, or `/execute` for a quick
    fix, which goes on to merge as your merge rules allow; on the cloud, it
@@ -75,12 +87,14 @@ waiting for you in the morning.
 
 ## Quick start
 
-Tested on 2026-11-17 with `unsupervised` v0.1.2 (commit `a612ca5`), from
-this public repository, each method in an empty home folder, on macOS (Apple
-Silicon) with Claude Code 2.1.312, Codex CLI 0.159.0, skills CLI 1.9.0 and
-git 2.50.1. The skill names in each app were checked at its prompt, without
-sending a message. Installing the skill on Linux or Windows (WSL) is not
-tested yet.
+Tested on 2026-11-25 with `unsupervised` v0.1.3, from its release branch in
+a local clone before the release, each method in an empty home folder, on
+macOS (Apple Silicon) with Claude Code 2.1.312, skills CLI 1.9.0 and git
+2.50.1: the plugin installed as version 0.1.3, and both clones and
+`npx skills add` put the skill where this section says. The pinned clone and
+the tarball below exist once v0.1.3 is released. The skill names in each app
+(and Codex CLI 0.159.0) were last checked at its prompt with v0.1.2.
+Installing the skill on Linux or Windows (WSL) is not tested yet.
 
 Pick one method. If you install the plugin and also keep a copy in
 `~/.claude/skills/unsupervised`, Claude Code loads the plugin and reports the
@@ -104,7 +118,7 @@ Or from your shell, with the same result:
 ```bash
 claude plugin marketplace add mutagent-io/unsupervised
 claude plugin install unsupervised@unsupervised
-claude plugin list   # unsupervised@unsupervised, Version: 0.1.2, enabled
+claude plugin list   # unsupervised@unsupervised, Version: 0.1.3, enabled
 ```
 
 The marketplace is this repository. The plugin installs from this
@@ -148,7 +162,7 @@ or anywhere it can read, and see [For agents](#for-agents).
 are on a detached HEAD; both are expected for a tag):
 
 ```bash
-git clone --branch v0.1.2 --depth 1 https://github.com/mutagent-io/unsupervised ~/.claude/skills/unsupervised
+git clone --branch v0.1.3 --depth 1 https://github.com/mutagent-io/unsupervised ~/.claude/skills/unsupervised
 ```
 
 Every [release](https://github.com/mutagent-io/unsupervised/releases) also
@@ -157,7 +171,7 @@ folder:
 
 ```bash
 mkdir -p ~/.claude/skills
-curl -fsSL https://github.com/mutagent-io/unsupervised/releases/download/v0.1.2/unsupervised-v0.1.2.tar.gz | tar -xz -C ~/.claude/skills
+curl -fsSL https://github.com/mutagent-io/unsupervised/releases/download/v0.1.3/unsupervised-v0.1.3.tar.gz | tar -xz -C ~/.claude/skills
 ```
 
 Use the folder you installed into (`~/.claude/skills/unsupervised` below):
@@ -235,14 +249,21 @@ isn't set up and offers to onboard it, instead of taking the task over.
 - "Why didn't the factory pick up my issue?"
 - "Hand this bug to Architech and tell me when the PR is up."
 
-## It never merges without you
+## Your agent never merges for you
 
 - **Approvals are yours.** Locally, you answer the session. On the cloud
-  factory, an approval is a label only a person can add: labels from bots
-  and apps approve nothing. Your agent never adds one, never approves a gate
-  for you, and never merges.
-- **Every change lands as a pull request.** The merge waits for your approval
-  at every autonomy level.
+  factory, an approval is a person's label, a pull-request review or
+  `architech factory runs approve`: labels from bots and apps approve
+  nothing. Your agent never adds one, never approves a gate for you, and
+  never merges.
+- **Every change lands as a pull request.** When a person is asked depends on
+  `policy.autonomy`: `calibrating` (the default) waits for you on every plan
+  and every merge; `approve-merges` on every merge; `approve-plans` on every
+  plan, then merges a pull request on its own once the review says APPROVE
+  or WATCH and CI is green; `unsupervised` waits on neither (a spec-sized
+  plan, and the exceptions it escalates, still ask). A repository with no
+  factory file asks before every merge. Your agent never changes that
+  setting without your yes.
 - **It asks before it installs or writes anything**, and shows you the
   installer before it runs.
 - **No keys in chat.** You sign in inside Architech with `/login`.

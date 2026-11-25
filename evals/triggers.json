@@ -1,5 +1,5 @@
 {
-  "about": "Trigger cases for the unsupervised skill. should_trigger prompts must load it; should_not_trigger prompts are near misses that must not. check_skill.py guards the description's trigger list against the near misses; trigger_eval.py runs them in Claude Code, in an empty folder: a plain code request there is a near miss, because the skill takes build requests only in a repository set up with Architech (the acceptance run covers that case).",
+  "about": "Trigger cases for the unsupervised skill. should_trigger prompts must load it; should_not_trigger prompts are near misses that must not. check_skill.py guards the description's trigger list against the near misses; trigger_eval.py runs them in Claude Code, in an empty folder: a plain code request there is a near miss, because the skill takes build requests only in a repository set up with Architech (not covered by an automated eval).",
   "should_trigger": [
     "Set up Architech in this repo.",
     "How do I install Architech?",
@@ -12,7 +12,7 @@
     "Which Architech command should I use for a small bug fix?",
     "Dispatch this issue to Architech in the background so it can still ask me questions.",
     "Is Architech up to date? Check for an update.",
-    "Let Architech's agents build this unsupervised while I review the plan.",
+    "Let Architech's agents build this while I only review the plan and the merge.",
     "Delegate this refactor to Architech from my harness and report back when the PR is open.",
     "My agent harness can run shell commands; use it to start, set up and operate Architech.",
     "Use Architech as a sub-agent for this bug and relay its questions to me.",

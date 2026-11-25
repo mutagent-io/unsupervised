@@ -27,7 +27,7 @@ INSTALL_LINES = (
     "git clone https://github.com/mutagent-io/unsupervised ~/.claude/skills/unsupervised",
     "git clone https://github.com/mutagent-io/unsupervised ~/.agents/skills/unsupervised",
 )
-PERSON_LABELS = ("factory:pickup", "factory:approved", "factory:changes", "merge-ready",
+PERSON_LABELS = ("factory:pickup", "factory:approved", "factory:changes", "merge:ready",
                  "merge:changes", "merge:hold", "merge:yolo")
 REQUIRED = [
     "SKILL.md", "AGENTS.md", "README.md", "LICENSE", "CHANGELOG.md", "CONTRIBUTING.md",
@@ -37,7 +37,11 @@ REQUIRED = [
 ] + [f"references/{r}" for r in REFERENCES]
 LINK_RE = re.compile(r"\]\(([^)#\s]+)(?:#[^)]*)?\)")
 # Host-neutral: hosts are named only in SKILL.md's per-host table section.
-HOSTS_RE = re.compile(r"Claude Code|Codex|GrokBot")
+HOSTS_RE = re.compile(r"Claude Code|Codex")
+# The factory.yaml language of the Architech release in metadata.architech_checked: the four
+# autonomy presets, and the retired forms its validate refuses (`retired: ...`).
+AUTONOMY_PRESETS = ("calibrating", "approve-plans", "approve-merges", "unsupervised")
+RETIRED_FACTORY_RE = re.compile(r"policy\.merge\.preset|(?<!policy\.)`plan\.subItems`|`autonomous`|merge-ready|merge:approved")
 HOST_TOOL_RE = re.compile(r"Skill tool|Bash tool|run_in_background|background option|shell tool's", re.I)
 HOST_SECTION_RE = re.compile(r"^## .*harness", re.I)
 PHASES = ("Start", "Setup", "Operate")
@@ -219,6 +223,13 @@ def check_factory(fm: dict[str, str]) -> None:
     text = " ".join(p.read_text(encoding="utf-8").split())
     if "`architech factory`" not in text or "`mutagent factory`" not in text or "Agent Factory" not in text:
         fail("factory.md must say the Software Factory CLI is `architech factory`, not `mutagent factory` (the Agent Factory)")
+    for preset in AUTONOMY_PRESETS:
+        if f"`{preset}`" not in text:
+            fail(f"factory.md must name the autonomy preset `{preset}`")
+    for doc in [ROOT / "SKILL.md", ROOT / "README.md", *sorted((ROOT / "references").glob("*.md"))]:
+        for n, line in enumerate(doc.read_text(encoding="utf-8").splitlines(), 1):
+            if RETIRED_FACTORY_RE.search(line):
+                fail(f"{doc.relative_to(ROOT)}:{n} names a retired factory.yaml form or label: {line.strip()[:70]!r}")
     safety = re.search(r"^## \d+\. Safety\b(.*?)(?=^## |\Z)", p.read_text(encoding="utf-8"), re.M | re.S)
     if not safety:
         fail("factory.md needs a '## n. Safety' section")
@@ -403,6 +414,21 @@ def check_versions(fm: dict[str, str]) -> None:
         fail(f"CHANGELOG.md top entry is not [{version}]")
 
 
+def check_manifests() -> None:
+    """Codex's short_description is a 25-64 char UI blurb; the brief template's VERDICT
+    lines are unindented, because the runner matches the reply's last line exactly."""
+    p = ROOT / "agents/openai.yaml"
+    if p.is_file():
+        m = re.search(r'^  short_description: "([^"]*)"$', p.read_text(encoding="utf-8"), re.M)
+        if not m or not 25 <= len(m.group(1)) <= 64:
+            fail(f"agents/openai.yaml short_description must be 25-64 chars, is {len(m.group(1)) if m else 'missing'}")
+    brief = ROOT / "assets/brief-template.md"
+    if brief.is_file():
+        for n, line in enumerate(brief.read_text(encoding="utf-8").splitlines(), 1):
+            if re.match(r"^\s+VERDICT:", line):
+                fail(f"assets/brief-template.md:{n} indents a VERDICT line; the runner needs it flush left")
+
+
 def check_icon() -> None:
     p = ROOT / "assets/icon.png"
     if not p.is_file():
@@ -474,6 +500,7 @@ def main() -> int:
     if fm and (ROOT / ".claude-plugin/plugin.json").is_file():
         check_versions(fm)
     check_icon()
+    check_manifests()
     check_triggers(fm)
     if failures:
         print(f"FAIL: {len(failures)} problem(s)", file=sys.stderr)
