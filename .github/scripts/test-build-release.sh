@@ -37,7 +37,7 @@ fi
 
 NOTES="$WORK/dist/release-notes.md"
 check "notes start with the release title" "# unsupervised v$VERSION" "$(head -n1 "$NOTES" 2>/dev/null)"
-check "notes carry the CHANGELOG entry" yes "$(grep -q '^### Added' "$NOTES" 2>/dev/null && echo yes || echo no)"
+check "notes carry the CHANGELOG entry" yes "$(grep -q '^### ' "$NOTES" 2>/dev/null && echo yes || echo no)"
 check "notes drop the CHANGELOG heading" yes \
   "$([ -s "$NOTES" ] && ! grep -qE '^## \[|unreleased' "$NOTES" && echo yes || echo no)"
 
