@@ -58,9 +58,10 @@ section 1 of [SKILL.md](../SKILL.md).
 **Do I need a GitHub board?** No. Without one, Architech still works for local
 software work. To add one later, ask Architech in the session to run
 `architech-onboard tracking --org <owner> --project <number>`. Mutagent Cloud
-needs a board: an organisation's GitHub Project, or, on a personal account,
-the repository's own issues (Cloud can't bind a Project a personal account
-owns). See [factory.md](factory.md), section 2.
+needs a board: an organisation's GitHub Project. Cloud can't bind a Project a
+personal account owns; it accepts the repository's own issues instead, but on
+Architech 0.1.67 the CLI can't validate or push that form yet (a fix is
+pending in the next release). See [factory.md](factory.md), section 2.
 
 **How does a board issue get picked up on the cloud?** It must be on the
 bound board, outside Triage, carry the pickup label (`factory:pickup` by
