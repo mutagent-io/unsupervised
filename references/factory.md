@@ -62,13 +62,10 @@ cloud. It is one of:
 - **A GitHub Project owned by an organisation** (`ref: { owner, project }`).
   A Project owned by a personal account works locally, but Cloud can't bind
   it: `board bind` fails with `BOARD_PROJECT_USER_OWNED`.
-- **A personal account: the repository's own issues** (`ref: { owner, repo }`,
-  edited by hand; status then lives in labels). Cloud accepts it. The
-  `architech factory` CLI does not yet: on Architech 0.1.67, `validate` and
-  `push` still refuse it (`boards.main.ref.project: must be your GitHub
-  Project's number`), although its release notes say otherwise. A CLI fix is
-  pending; until it ships, a personal account can't push this board with the
-  CLI. Naming both `project` and `repo` is refused.
+- **A personal account: a Repo-Issues board, the repository's own issues**
+  (`ref: { owner, repo }`; status then lives in `status:*` labels). It needs
+  Architech 0.1.68 or newer: older releases' `validate` and `push` refuse it.
+  Naming both `project` and `repo` is refused.
 
 1. **Onboard.** In an interactive session, `/onboard` asks whether to connect
    a GitHub Project board (its owner and project number) or leave it out.
@@ -96,10 +93,12 @@ cloud. It is one of:
    answer is until the move is done.
 
 Without onboarding, `architech factory init` writes the same format offline,
-with comments. It needs `--project` (an organisation's Project); without it
-the board ref stays a TODO that `validate` and `push` refuse (a hand-edited
-repository-issues `ref` is refused too on 0.1.67, section 2). It doesn't create the folder, and
-it prints the `gh label create` commands for the file's labels:
+with comments. Give it `--project` (an organisation's Project). For a
+Repo-Issues board, run it without `--project` and uncomment the file's
+`ref: { owner, repo }` example (0.1.68 writes one under the board ref).
+Without either, the board ref stays a TODO that `validate` and `push`
+refuse. It doesn't create the folder, and it prints the `gh label create`
+commands for the file's labels:
 
 ```bash
 mkdir -p .architech/factory
@@ -201,9 +200,8 @@ start setting it up because the user asked for something else ("set it up",
 > local?
 
 The cloud needs a board the GitHub App can reach: an organisation's GitHub
-Project, or, on a personal account, the repository's issues (section 2; the
-CLI can't push that form yet, as of 0.1.67). No such board yet: say so before
-the user decides.
+Project, or, on a personal account, a Repo-Issues board (section 2; Architech
+0.1.68 or newer). No such board yet: say so before the user decides.
 
 "Not now" (or no answer): stay local, carry on with the work, and don't ask
 again unless the user brings it up. A yes: walk through these steps with the
@@ -227,10 +225,8 @@ GitHub board are needed from step 1 on.
    `drift`; it grants no new permissions.
 6. If push says the board is not bound: `architech factory board bind <factory-id> --json`.
    `BOARD_PROJECT_USER_OWNED` means the Project belongs to a personal
-   account. On Architech 0.1.67 a personal account can't validate or push a
-   repository-issues board from the CLI yet; a CLI fix is pending in the next
-   Architech release (section 2). Until then, use a Project owned by an
-   organisation.
+   account: switch the board to a Repo-Issues board, `ref: { owner, repo }`
+   (section 2; Architech 0.1.68 or newer), and push again.
 7. `architech factory enable <factory-id> --json`: triggers start work now.
    Check with `architech factory status --json`.
 
@@ -304,13 +300,13 @@ workspace.
 
 | Symptom | Look at / do |
 |---|---|
-| No `factory.yaml`, or one with `provider: none` | The board was skipped. In the session, ask Architech to run `architech-onboard tracking --org <owner> --project <number>`, or, once a CLI release accepts it, use the repository's issues (section 2) |
+| No `factory.yaml`, or one with `provider: none` | The board was skipped. In the session, ask Architech to run `architech-onboard tracking --org <owner> --project <number>`, or, on a personal account, set a Repo-Issues `ref: { owner, repo }` (section 2) |
 | `validate` passes, Cloud setup fails | Validation is offline and checks shape only: run `architech factory status --json` |
 | Work pauses with `NO_PROVIDER_CONFIGURED` | Add a model provider to the workspace; local sign-ins don't reach Cloud |
 | Push can't link a repository | Its name in `repos`, and the GitHub App's access; push grants no permissions |
 | Board not bound | `architech factory board bind <factory-id> --json`, after checking the GitHub connection and the board's owner and project number |
-| `board bind` fails `BOARD_PROJECT_USER_OWNED` | The Project belongs to a personal account. On 0.1.67 the CLI can't validate or push the alternative, a repository-issues board, yet; a fix is pending in the next Architech release (section 2). Until then, use a Project owned by an organisation |
-| `validate` or `push` refuses `ref: { owner, repo }` (`must be your GitHub Project's number`) | A known CLI defect, still in Architech 0.1.67 (Cloud itself accepts the form): run `architech update` and try again once a later release fixes it; meanwhile use an organisation's Project |
+| `board bind` fails `BOARD_PROJECT_USER_OWNED` | The Project belongs to a personal account: use a Repo-Issues board, `ref: { owner, repo }` (section 2) |
+| `validate` or `push` refuses `ref: { owner, repo }` (`must be your GitHub Project's number`) | Architech is older than 0.1.68: run `architech update` (with the user's yes), then validate again |
 | `validate` says `retired:` | The file uses a form the release no longer accepts: run the `architech factory migrate <file> --write` its `fix` names, with the user's yes |
 | A mapped column is missing | Fix its exact spelling, or remove the mapping |
 | A board item is not picked up | Is the Factory enabled? Is the issue on the bound board? Does it have every pickup label, no hold label, and a column other than `triage`? Open runs over `limits.maxActiveRuns` wait in a queue |

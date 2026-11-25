@@ -94,10 +94,10 @@ their file: ask before you edit it.
 | Remove Architech and the saved email | `bash architech-install.sh uninstall --reset` |
 | Forget the saved email, enter a new one and reinstall (in the user's terminal) | `bash architech-install.sh --reset` |
 
-`update --check` prints one of two lines (checked on 0.1.67):
+`update --check` prints one of two lines (checked on 0.1.68):
 
 ```text
-architech 0.1.67 is up to date (channel: latest, tag: architech-v0.1.67).
+architech 0.1.68 is up to date (channel: latest, tag: architech-v0.1.68).
 update available: <new> (tag architech-v<new>) — installed: <current> (channel: latest).
 ```
 

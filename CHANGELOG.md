@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.1.5] - 2026-11-25
+
+Checked against Architech 0.1.68 (`metadata.architech_checked`).
+
+### Changed
+- Personal accounts use a Repo-Issues board (`ref: { owner, repo }`, the
+  repository's own issues). Architech 0.1.68 accepts it in
+  `architech factory validate` and `push`, so the 0.1.67 caveat is gone and
+  the skill sends a personal account there again: the cloud setup step, the
+  `BOARD_PROJECT_USER_OWNED` row, SKILL.md, the FAQ and the onboarding page.
+  The minimum release, 0.1.68, is stated wherever it matters.
+- `architech factory init` writes a commented Repo-Issues `ref` example on
+  0.1.68; factory.md says how to use it.
+- `update --check` output for 0.1.68.
+
 ## [0.1.4] - 2026-11-25
 
 Checked against Architech 0.1.67 (`metadata.architech_checked`).
