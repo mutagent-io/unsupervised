@@ -27,8 +27,8 @@ compatibility: >-
   installer's email prompt.
 metadata:
   author: mutagent
-  skill_version: "0.1.4"
-  architech_checked: "0.1.67"
+  skill_version: "0.1.5"
+  architech_checked: "0.1.68"
   homepage: "https://github.com/mutagent-io/unsupervised"
   docs: "https://docs.mutagent.io/architech/overview"
 ---
@@ -161,9 +161,9 @@ review); local keeps every run in their session on this machine. Never
 move it without a yes. "Not now" means stay local and carry on with the work;
 don't ask again unless they bring it up. A yes: factory.md, section 4. No
 board yet? Ask anyway, and say the cloud needs one: an organisation's GitHub
-Project (on a personal account, the repository's own issues, which the CLI
-can't push yet on 0.1.67: factory.md, section 2); meanwhile Architech works
-locally without one.
+Project, or, on a personal account, a Repo-Issues board (the repository's
+own issues; Architech 0.1.68 or newer: factory.md, section 2); meanwhile
+Architech works locally without one.
 
 ## 5. Operate: hand work to Architech
 
