@@ -1,16 +1,16 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
   "name": "unsupervised",
-  "description": "The unsupervised skill: install, onboard and run Architech.",
+  "description": "The unsupervised skill: install Architech (Early Access), onboard a repository and run its Software Factory from any harness.",
   "owner": { "name": "Mutagent" },
   "plugins": [
     {
       "name": "unsupervised",
       "source": "./",
-      "description": "Install, onboard and run Architech, Mutagent's software-engineering harness, from Claude Code or Codex.",
-      "version": "0.1.2",
+      "description": "Install Architech, Mutagent's software-engineering harness (Early Access), onboard a repository, set up its Software Factory locally or on Mutagent Cloud, and hand it work: agents plan, build, review and ship. Works from any agent harness that can run shell commands.",
+      "version": "0.1.3",
       "category": "development",
-      "tags": ["architech", "mutagent", "onboarding", "headless", "agent-skills"],
+      "tags": ["architech", "mutagent", "onboarding", "headless", "software-factory", "agent-skills"],
       "homepage": "https://github.com/mutagent-io/unsupervised",
       "repository": "https://github.com/mutagent-io/unsupervised",
       "license": "MIT"

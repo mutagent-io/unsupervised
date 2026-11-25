@@ -18,10 +18,12 @@
 
 ## Output
 - Write the deliverable to </abs/RUN/result.md>
-- The LAST line of your reply is exactly one of:
-    VERDICT: DONE
-    VERDICT: BLOCKED <the decision you need>
-    VERDICT: FAILED <what broke>
+- The LAST line of your reply is exactly one of these, flush left, with no
+  leading spaces or other characters:
+
+VERDICT: DONE
+VERDICT: BLOCKED <the decision you need>
+VERDICT: FAILED <what broke>
 
 ## Done when
 <A check the caller can run: a file exists, a PR number is printed, a command exits 0.>

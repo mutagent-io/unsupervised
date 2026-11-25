@@ -1,5 +1,63 @@
 # Changelog
 
+## [0.1.3] - 2026-11-25
+
+Checked against Architech 0.1.66 (`metadata.architech_checked`).
+
+### Added
+- `check_skill.py` checks the factory language (the four presets, no retired
+  forms or label names), the Codex `short_description` length and the brief
+  template's `VERDICT:` lines.
+
+### Fixed
+- **When a person is asked.** The skill, README, FAQ and workflows page said
+  every merge waits for the user at every autonomy level. They now say it per
+  `policy.autonomy` preset: `calibrating` (the default) waits on every plan
+  and every merge; `approve-merges` on every merge and on a spec-sized plan;
+  `approve-plans` on every plan and merges by itself once the review says
+  APPROVE or WATCH and CI is green; `unsupervised` only on a spec-sized plan.
+  A merge that runs by itself still asks on an exception. A
+  repository with no factory file asks before every merge. Review sends work
+  back at most 2 rounds by default.
+- `references/factory.md` speaks the 0.1.66 `factory.yaml` language: the four
+  `policy.autonomy` presets, `policy.merge.approve`, `policy.plan` (`approve`,
+  `subItems`), `policy.code-review.maxLoops`, `repos[].ci`, the `fastLane`
+  label, and the approval label `merge:ready`. The retired forms it taught
+  (`policy.merge.preset`, autonomy `standard`/`autonomous`, a top-level
+  `plan.subItems`) are refused by 0.1.66's `validate`.
+- Boards: an organisation's GitHub Project, or, on a personal account, the
+  repository's issues (`ref: { owner, repo }`; Cloud can't bind a personal
+  Project, `BOARD_PROJECT_USER_OWNED`). The CLI validates the repository-issues
+  form from Architech 0.1.67, not yet released. An issue must be on the board,
+  carry the pickup label and sit outside Triage; assigning it to the Factory
+  is a default trigger too. `push` links the repositories and binds the board.
+- `architech factory init` needs `--project` (or a hand-edited `ref`), and the
+  folder must exist first.
+- Onboarding always writes a `mode: local` factory file and the `CLAUDE.md`
+  pointer, even with no board. A board is added later with
+  `architech-onboard tracking --org <owner> --project <number>`, labels with
+  `architech-onboard labels --apply`. `/workflows <name>` shows a workflow; it
+  doesn't run it.
+- The installed Claude Code plugin lives in
+  `~/.claude/plugins/cache/<marketplace>/unsupervised/<version>/`.
+- `install.md`: the installer's root, `PATH` collision, rate-limit, network and
+  disk-space refusals, the 0.1.66 `update --check` output, and
+  `uninstall --reset`.
+- `dispatch.md`: the runner exits 128+n when it is stopped by a signal;
+  `kill-session` leaving Architech running was seen on 0.1.49, not on 0.1.66.
+- The brief template's `VERDICT:` lines are flush left: the runner matches the
+  reply's last line exactly.
+- FAQ: the troubleshooting cross-reference points at SKILL.md section 7;
+  links to the lifecycle-commands and Software Factory docs.
+
+### Changed
+- Plugin, marketplace and Codex descriptions mention the Software Factory,
+  Early Access and any harness; Codex's `short_description` fits its 64-char
+  limit and the Codex metadata names the icon.
+- The trigger eval no longer says "unsupervised while I review the plan".
+- README: a Quick start where every line was run, and a note that the plugin
+  is not in Anthropic's plugin directory (both on `main` after 0.1.2).
+
 ## [0.1.2] - 2026-11-16
 
 ### Added

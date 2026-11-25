@@ -9,7 +9,8 @@ Keep it small, and treat every file as public.
 - **Public content only.** No machine paths, private repository names,
   internal tool names, environment variables, keys or tokens.
 - **Every command the skill names must be public:** on the Architech boot
-  screen or on https://docs.mutagent.io/architech. When the product and the
+  screen, in `architech factory --help`, or on https://docs.mutagent.io
+  (the Architech and Software Factory pages). When the product and the
   skill disagree, the product wins; fix the skill.
 - **No `CLAUDE.md` in this repository.** The root is the installed skill
   folder, and a `CLAUDE.md` here could load into users' sessions. Maintainer
@@ -18,9 +19,11 @@ Keep it small, and treat every file as public.
   natively to `SKILL.md`, and says to ignore it otherwise, so it is harmless if
   a harness loads it into an unrelated session. Never copy steps into it.
 - **Harness-neutral.** Host names (Claude Code, Codex, ...) and host tool
-  names appear only in SKILL.md section 1's per-host table. Everywhere else,
-  describe the capability ("if your harness can run a command in the
-  background..."). `check_skill.py` enforces this.
+  names appear only in SKILL.md section 1's per-host table; the rest of
+  SKILL.md, `references/`, `assets/`, `scripts/` and AGENTS.md describe the
+  capability ("if your harness can run a command in the background...").
+  README, CHANGELOG and the manifests may name hosts. `check_skill.py`
+  enforces this.
 - **Operate safely from anywhere.** Every `tmux ... new-session` in the docs
   starts its private server with `-f /dev/null`, and every runner call is
   `<skill-dir>/scripts/run-headless.sh`. `check_skill.py` enforces both.
@@ -47,7 +50,7 @@ Keep it small, and treat every file as public.
 CI runs all of these on every pull request. Run them locally first:
 
 ```bash
-python3 .github/scripts/check_skill.py        # structure, limits, versions, icon, trigger list
+python3 .github/scripts/check_skill.py        # structure, limits, versions, icon, factory language, manifests, trigger list
 python3 .github/scripts/sanitize.py --check   # no machine paths, personal emails or secrets
 python3 .github/scripts/sanitize.py --check --git   # the same, in commit authors and messages
 bash .github/scripts/test-sanitize.sh         # the sanitizer's own tests
